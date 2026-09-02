@@ -1,30 +1,24 @@
-// Sanity-check the new relevance-gate math against realistic MiniLM cosine values.
-function gate(sims) {
-  const vals = sims;
-  const max = Math.max(...vals), min = Math.min(...vals);
-  const span = (max - min) || 1e-9;
-  const pull = Math.max(0, Math.min(1, (max - 0.30) / 0.35));
-  const norms = vals.map(s => ((s - min) / span) * pull);
-  const radius = n => 130 - n * 92;
-  return { max, pull, norms, radii: norms.map(radius) };
+// Verify the per-dot matching logic: only projects clearing the floor move in.
+const FLOOR = 0.30, CEIL = 0.62;
+function radiusFor(s) {
+  const norm = Math.max(0, Math.min(1, (s - FLOOR) / (CEIL - FLOOR)));
+  return { norm, radius: 130 - norm * 92, matched: s >= FLOOR };
 }
 
-// Case 1: on-topic query ("payment outage pager duty" -> ExplainOps strong, others mid)
-const onTopic = [0.52, 0.44, 0.41, 0.38, 0.35, 0.32, 0.30, 0.28, 0.26, 0.24];
-const r1 = gate(onTopic);
-console.log("ON-TOPIC   pull =", r1.pull.toFixed(2), " winner radius =", r1.radii[0].toFixed(0), " last radius =", r1.radii[9].toFixed(0));
+// Case 1: on-topic query — one strong match, three weak
+const onTopic = [0.52, 0.28, 0.24, 0.20].map(radiusFor);
+console.log("ON-TOPIC:");
+onTopic.forEach((r, i) => console.log(`  project ${i}: s= ${(FLOOR + (CEIL - FLOOR) * r.norm).toFixed(2)} matched=${r.matched} radius=${r.radius.toFixed(0)} ${r.matched ? "MOVES" : "HOLDS ORBIT"}`));
 
-// Case 2: off-topic query (all cosines weak)
-const offTopic = [0.24, 0.22, 0.21, 0.20, 0.19, 0.18, 0.17, 0.16, 0.15, 0.14];
-const r2 = gate(offTopic);
-console.log("OFF-TOPIC  pull =", r2.pull.toFixed(2), " winner radius =", r2.radii[0].toFixed(0), " (orbit=130 => nothing moves)");
+// Case 2: off-topic query — nothing clears the floor
+const offTopic = [0.26, 0.22, 0.19, 0.15].map(radiusFor);
+console.log("OFF-TOPIC:");
+offTopic.forEach((r, i) => console.log(`  project ${i}: matched=${r.matched} radius=${r.radius.toFixed(0)} ${r.matched ? "MOVES" : "HOLDS ORBIT"}`));
 
-// Case 3: strong query, two close contenders
-const strong = [0.58, 0.55, 0.36, 0.33, 0.31, 0.30, 0.29, 0.27, 0.26, 0.25];
-const r3 = gate(strong);
-console.log("STRONG     pull =", r3.pull.toFixed(2), " winner radius =", r3.radii[0].toFixed(0), " runner-up radius =", r3.radii[1].toFixed(0), " last radius =", r3.radii[9].toFixed(0));
+// Case 3: two strong matches — both come in, stronger one closer + gold
+const two = [0.55, 0.48, 0.22, 0.18].map(radiusFor);
+console.log("TWO MATCHES:");
+two.forEach((r, i) => console.log(`  project ${i}: norm=${r.norm.toFixed(2)} radius=${r.radius.toFixed(0)} ${r.matched ? "MOVES" : "HOLDS ORBIT"}`));
 
-// Case 4: everything nearly identical (span ~ 0) -> pull decides, not noise
-const uniform = [0.33, 0.33, 0.33, 0.32, 0.33, 0.33, 0.33, 0.33, 0.33, 0.33];
-const r4 = gate(uniform);
-console.log("UNIFORM    pull =", r4.pull.toFixed(2), " spread of norms =", (Math.max(...r4.norms) - Math.min(...r4.norms)).toFixed(2));
+// Pointer check: query stays at 170,170 always
+console.log("POINTER: fixed at translate(170,170) — never moves");

@@ -924,40 +924,39 @@ function applySemantic(){
       s: d.mini ? cosine(qv, miniVecs[i - DOCS.length]) : cosine(qv, docVecs[i])
     }));
     const vals = sims.map(x => x.s);
-    const max = Math.max(...vals), min = Math.min(...vals);
-    const span = (max - min) || 1e-9;
-    // relevance gate: if even the best match is semantically weak, nothing moves
-    // (MiniLM: unrelated pairs ~0.05-0.25, related ~0.30-0.50, strong ~0.50+)
-    const pull = Math.max(0, Math.min(1, (max - 0.30) / 0.35));
-    // relative spread among the projects, scaled by overall relevance
-    sims.forEach(x => { x.norm = ((x.s - min) / span) * pull; });
-    const best = sims.reduce((a, b) => (b.norm > a.norm ? b : a));
-    // headline cards: bars + order
+    // per-dot absolute matching: only a project whose own similarity clears the
+    // floor comes toward the query; everyone else holds the orbit. No relative
+    // rescaling, no pointer movement — the query stays fixed at the center.
+    const FLOOR = 0.30, CEIL = 0.62;
+    sims.forEach(x => {
+      x.norm = Math.max(0, Math.min(1, (x.s - FLOOR) / (CEIL - FLOOR)));
+      x.matched = x.s >= FLOOR;
+    });
+    const best = sims.reduce((a, b) => (b.s > a.s ? b : a));
+    // headline cards: bars + order (matched first, ranked by own similarity)
     sims.slice(0, DOCS.length).forEach(({d, s, norm}) => {
       const fill = d.card.querySelector('[data-fill]');
       const label = d.card.querySelector('[data-label]');
       fill.style.width = Math.round(norm * 100) + '%';
       label.textContent = `semantic similarity: ${s.toFixed(3)}`;
-      d.card.classList.toggle('top-match', best.d === d && pull > 0.25);
+      d.card.classList.toggle('top-match', best.matched && best.d === d);
     });
-    sims.slice(0, DOCS.length).slice().sort((a, b) => b.norm - a.norm)
-        .forEach(({d}, idx) => { d.card.style.order = idx; });
-    // mini-cards: highlight the best only if it is genuinely competitive
-    const bestMini = sims.filter(x => x.d.mini).sort((a, b) => b.norm - a.norm)[0];
+    const ordered = sims.slice(0, DOCS.length)
+      .sort((a, b) => (b.matched - a.matched) || (b.s - a.s));
+    ordered.forEach(({d}, idx) => { d.card.style.order = idx; });
+    // mini-cards: highlight the best only if it actually matches
     MINI_DOCS.forEach(m => { m.el.style.borderColor = ''; });
-    if (bestMini && bestMini.norm > 0.4) bestMini.d.card.style.borderColor = 'var(--accent)';
-    // vector space: winner moves near the query only when relevance clears the gate
-    sims.forEach(({d, norm}) => {
+    if (best.matched && best.d.mini) best.d.card.style.borderColor = 'var(--accent)';
+    // vector space: matched projects move in, unmatched hold the orbit, query fixed
+    sims.forEach(({d, norm, matched}) => {
       const radius = 130 - norm * 92;
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
-      d.el.parentElement.classList.toggle('lit', norm > 0.18);
-      d.el.querySelector('circle').setAttribute('fill', (norm > 0.6 && pull > 0.5) ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', (pull > 0.2 && norm < 0.2) ? '0' : '1');
+      d.el.parentElement.classList.toggle('lit', matched);
+      d.el.querySelector('circle').setAttribute('fill', (matched && best.d === d) ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', (matched && norm > 0.75) ? '0' : '1');
     });
-    // the query pointer leans toward the best match, proportionally to relevance
-    const off = 14 * best.norm;
-    const vc = document.querySelector('.vcenter');
-    vc.setAttribute('transform', `translate(${170 + Math.cos(best.d.angle)*off},${170 + Math.sin(best.d.angle)*off})`);
+    // query pointer never moves
+    document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
   });
 }
 
@@ -1078,35 +1077,40 @@ init();
 
   function runQuery(q){
     const qn = q.trim();
+    // keyword fallback: same rule — only projects that actually match move in
+    const FLOOR = 0.34, CEIL = 1.0;
     const entries = cards.map(card => {
       const s = score(qn, card.dataset.tags);
-      return {card, s, dot: window.__vdotRegistry.find(d => d.card === card)};
+      const norm = Math.max(0, Math.min(1, (s - FLOOR) / (CEIL - FLOOR)));
+      const matched = s >= FLOOR;
+      return {card, s, norm, matched, dot: window.__vdotRegistry.find(d => d.card === card)};
     });
-    const max = Math.max(...entries.map(e => e.s), 1e-9);
+    const best = entries.reduce((a, b) => (b.s > a.s ? b : a));
 
-    entries.forEach(({card, s}) => {
+    entries.forEach(({card, s, norm}) => {
       const fill = card.querySelector('[data-fill]');
       const label = card.querySelector('[data-label]');
-      const pct = Math.round(s * 100);
-      fill.style.width = pct + '%';
-      label.textContent = qn ? `keyword overlap: ${pct}%` : 'keyword overlap: 0%';
-      card.classList.toggle('top-match', qn !== '' && s > 0 && s === max);
+      fill.style.width = Math.round(norm * 100) + '%';
+      label.textContent = qn ? `keyword overlap: ${Math.round(s * 100)}%` : 'keyword overlap: 0%';
+      card.classList.toggle('top-match', qn !== '' && best.matched && best.card === card);
     });
 
     // reorder by score
-    entries.slice().sort((a,b) => b.s - a.s).forEach(({card}, idx) => { card.style.order = idx; });
+    entries.slice().sort((a, b) => (b.matched - a.matched) || (b.s - a.s))
+      .forEach(({card}, idx) => { card.style.order = idx; });
 
-    // move vector dots: relative winner moves near the query, minis hold the orbit
+    // vector dots: matched projects come in, unmatched hold the orbit, query fixed
     window.__vdotRegistry.forEach(d => {
       const e = entries.find(x => x.dot === d);
-      const norm = (e && qn && max > 0) ? e.s / max : 0;
+      const norm = (qn && e) ? e.norm : 0;
+      const matched = qn && e ? e.matched : false;
       const radius = 130 - norm * 92;
       const x = Math.cos(d.angle) * radius;
       const y = Math.sin(d.angle) * radius;
       d.el.setAttribute('transform', `translate(${x},${y})`);
-      d.el.parentElement.classList.toggle('lit', qn !== '' && norm > 0.15);
-      d.el.querySelector('circle').setAttribute('fill', norm > 0.7 ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', qn && norm < 0.2 ? '0' : '1');
+      d.el.parentElement.classList.toggle('lit', matched);
+      d.el.querySelector('circle').setAttribute('fill', (matched && best.card === d.card) ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', (matched && norm > 0.75) ? '0' : '1');
     });
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
   }
