@@ -961,7 +961,21 @@ function applySemantic(){
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
       d.el.parentElement.classList.toggle('lit', matched);
       d.el.querySelector('circle').setAttribute('fill', (matched && best.d === d) ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', (matched && radius < 62) ? '0' : '1');
+      // label: near dots get their name placed radially outward (away from the
+      // query marker) so it stays readable; far dots keep the side placement.
+      const text = d.el.querySelector('text');
+      if (radius < 70) {
+        text.setAttribute('x', (Math.cos(d.angle) * 11).toFixed(1));
+        text.setAttribute('y', (Math.sin(d.angle) * 11 + 3.5).toFixed(1));
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('opacity', '1');
+      } else {
+        const flip = d.angle > Math.PI / 2 || d.angle < -Math.PI / 2;
+        text.setAttribute('x', flip ? -60 : 8);
+        text.setAttribute('y', '3');
+        text.setAttribute('text-anchor', 'start');
+        text.setAttribute('opacity', '1');
+      }
     });
     // query pointer never moves
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
@@ -1138,7 +1152,19 @@ init();
       d.el.setAttribute('transform', `translate(${x},${y})`);
       d.el.parentElement.classList.toggle('lit', matched);
       d.el.querySelector('circle').setAttribute('fill', (matched && best.card === d.card) ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', (matched && radius < 62) ? '0' : '1');
+      const text = d.el.querySelector('text');
+      if (radius < 70) {
+        text.setAttribute('x', (Math.cos(d.angle) * 11).toFixed(1));
+        text.setAttribute('y', (Math.sin(d.angle) * 11 + 3.5).toFixed(1));
+        text.setAttribute('text-anchor', 'middle');
+        text.setAttribute('opacity', '1');
+      } else {
+        const flip = d.angle > Math.PI / 2 || d.angle < -Math.PI / 2;
+        text.setAttribute('x', flip ? -60 : 8);
+        text.setAttribute('y', '3');
+        text.setAttribute('text-anchor', 'start');
+        text.setAttribute('opacity', '1');
+      }
     });
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
   }
