@@ -161,7 +161,7 @@
   .dot-sep{width:3px;height:3px;border-radius:50%;background:var(--text-faint); display:inline-block;}
 
   .hero-bottom{
-    display:grid; grid-template-columns:1.15fr 0.85fr; gap:40px; align-items:start; margin-top:36px;
+    display:grid; grid-template-columns:0.95fr 1.05fr; gap:36px; align-items:start; margin-top:36px;
   }
   @media (max-width:860px){
     .hero-bottom{grid-template-columns:1fr;}
@@ -169,9 +169,12 @@
 
   /* vector canvas */
   .vspace{
-    position:relative; aspect-ratio:1/1; max-width:300px; margin:0 auto;
+    position:relative; aspect-ratio:1/1; max-width:430px; margin:0 auto;
   }
   .vspace svg{width:100%; height:100%; overflow:visible;}
+  .oring{fill:none; stroke:var(--border); stroke-dasharray:2 6;}
+  .vdot-mini circle{opacity:0.65;}
+  .vdot-mini text{font-size:8px !important; opacity:0.75;}
   .vgrid line{stroke:var(--border); stroke-width:1;}
   .vdot{transition:transform .6s cubic-bezier(.2,.8,.2,1);}
   .vdot-inner{transition:transform .6s cubic-bezier(.2,.8,.2,1);}
@@ -492,12 +495,13 @@
         </div>
 
         <div class="vspace" aria-hidden="true">
-          <svg id="vsvg" viewBox="0 0 300 300">
+          <svg id="vsvg" viewBox="0 0 340 340">
             <g class="vgrid">
-              <line x1="150" y1="0" x2="150" y2="300"></line>
-              <line x1="0" y1="150" x2="300" y2="150"></line>
+              <line x1="170" y1="0" x2="170" y2="340"></line>
+              <line x1="0" y1="170" x2="340" y2="170"></line>
             </g>
-            <g class="vcenter" transform="translate(150,150)">
+            <circle class="oring" cx="170" cy="170" r="130"></circle>
+            <g class="vcenter" transform="translate(170,170)">
               <circle r="5"></circle>
               <text x="10" y="-10">query</text>
             </g>
@@ -891,6 +895,7 @@ function applySemantic(){
   const q = input.value.trim();
   lastQuery = q;
   const mySeq = ++seq;
+  const registry = window.__vdotRegistry;
   if (!q){
     DOCS.forEach(({card}) => {
       const fill = card.querySelector('[data-fill]');
@@ -900,51 +905,56 @@ function applySemantic(){
       card.classList.remove('top-match');
       card.style.order = '';
     });
-    document.querySelectorAll('#more-projects .mini-card').forEach(mc => { mc.style.order=''; mc.style.borderColor=''; });
-    window.__vdotRegistry.forEach(d => {
-      d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*110},${Math.sin(d.angle)*110})`);
+    MINI_DOCS.forEach(m => { m.el.style.order = ''; m.el.style.borderColor = ''; });
+    registry.forEach(d => {
+      d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*130},${Math.sin(d.angle)*130})`);
       d.el.parentElement.classList.remove('lit');
       d.el.querySelector('circle').setAttribute('fill', '#59D9C7');
       d.el.querySelector('text').setAttribute('opacity', '1');
     });
+    document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
     return;
   }
   embed(q).then(qvec => {
     if (mySeq !== seq) return;  // a newer query already superseded this result
     const qv = qvec.data ?? qvec;
-    const scored = DOCS.map(({card, text}, i) => ({card, s: cosine(qv, docVecs[i])}));
-    const max = Math.max(...scored.map(x => x.s), 1e-9);
-    scored.forEach(({card, s}) => {
-      const fill = card.querySelector('[data-fill]');
-      const label = card.querySelector('[data-label]');
-      const norm = Math.max(0, (s - 0.05) / 0.6);  // cosine in ~[0.05,0.65] band → 0..1
-      fill.style.width = Math.min(100, Math.round(norm * 100)) + '%';
+    // score every dot (headline + mini) against the query
+    const sims = registry.map((d, i) => ({
+      d,
+      s: d.mini ? cosine(qv, miniVecs[i - DOCS.length]) : cosine(qv, docVecs[i])
+    }));
+    const vals = sims.map(x => x.s);
+    const max = Math.max(...vals), min = Math.min(...vals);
+    const span = (max - min) || 1e-9;
+    // relative normalization: only the best match pulls in, the rest hold their orbit
+    sims.forEach(x => { x.norm = (x.s - min) / span; });
+    const best = sims.reduce((a, b) => (b.norm > a.norm ? b : a));
+    // headline cards: bars + order
+    sims.slice(0, DOCS.length).forEach(({d, s, norm}) => {
+      const fill = d.card.querySelector('[data-fill]');
+      const label = d.card.querySelector('[data-label]');
+      fill.style.width = Math.round(norm * 100) + '%';
       label.textContent = `semantic similarity: ${s.toFixed(3)}`;
-      card.classList.toggle('top-match', s === Math.max(...scored.map(x => x.s)));
+      d.card.classList.toggle('top-match', norm === 1);
     });
-    scored.sort((a,b) => b.s - a.s);
-    scored.forEach(({card}, idx) => { card.style.order = idx; });
-    // mini-cards: highlight best if it beats headline cards
-    if (MINI_DOCS.length && miniVecs.length){
-      const mScored = MINI_DOCS.map((m, i) => ({m, s: cosine(qv, miniVecs[i])}));
-      mScored.sort((a,b) => b.s - a.s);
-      const bestMini = mScored[0];
-      const worstHeadline = Math.min(...scored.map(x => x.s));
-      mScored.forEach(({m, s}, idx) => {
-        m.el.style.order = idx;
-        m.el.style.borderColor = (bestMini && s > worstHeadline && idx === 0) ? 'var(--accent)' : '';
-      });
-    }
-    // vector space: normalized similarity → radius, gold when close, labels fade near center
-    window.__vdotRegistry.forEach((d, i) => {
-      const s = scored.find(x => x.card === d.card)?.s ?? 0;
-      const norm = Math.max(0, (s - 0.05) / 0.6);
-      const radius = 110 - norm * 82;
+    sims.slice(0, DOCS.length).slice().sort((a, b) => b.norm - a.norm)
+        .forEach(({d}, idx) => { d.card.style.order = idx; });
+    // mini-cards: highlight the best only if it is genuinely competitive
+    const bestMini = sims.filter(x => x.d.mini).sort((a, b) => b.norm - a.norm)[0];
+    MINI_DOCS.forEach(m => { m.el.style.borderColor = ''; });
+    if (bestMini && bestMini.norm > 0.5) bestMini.d.card.style.borderColor = 'var(--accent)';
+    // vector space: winner moves near the query, everyone else holds their orbit
+    sims.forEach(({d, norm}) => {
+      const radius = 130 - norm * 92;
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
       d.el.parentElement.classList.toggle('lit', norm > 0.15);
-      d.el.querySelector('circle').setAttribute('fill', norm > 0.3 ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', norm < 0.22 ? '0' : '1');
+      d.el.querySelector('circle').setAttribute('fill', norm > 0.7 ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', norm < 0.2 ? '0' : '1');
     });
+    // the query pointer leans toward the best match
+    const off = 4 + 12 * best.norm;
+    const vc = document.querySelector('.vcenter');
+    vc.setAttribute('transform', `translate(${170 + Math.cos(best.d.angle)*off},${170 + Math.sin(best.d.angle)*off})`);
   });
 }
 
@@ -1015,33 +1025,37 @@ init();
 
 <script>
 (function(){
-  const cards = Array.from(document.querySelectorAll('.card'));
+  const cards = Array.from(document.querySelectorAll('#projectGrid .card'));
+  const miniCards = Array.from(document.querySelectorAll('#more-projects .mini-card'));
   const input = document.getElementById('searchInput');
   const chips = document.querySelectorAll('.chip');
   const dotLayer = document.getElementById('dotLayer');
 
-  // build vector-space dots, one per card, arranged around the center
-  const dots = cards.map((card, i) => {
-    const angle = (i / cards.length) * Math.PI * 2 - Math.PI/2;
-    const baseRadius = 110;
+  // build vector-space dots: headline projects (outer labels) + mini projects (dimmer, smaller)
+  const all = cards.map(card => ({card, mini: false}))
+    .concat(miniCards.map(mc => ({card: mc, mini: true})));
+  const baseRadius = 130;
+  const dots = all.map((item, i) => {
+    const angle = (i / all.length) * Math.PI * 2 - Math.PI/2;
     const g = document.createElementNS('http://www.w3.org/2000/svg','g');
     g.classList.add('vdot');
-    g.setAttribute('transform', `translate(150,150)`);
+    if (item.mini) g.classList.add('vdot-mini');
+    g.setAttribute('transform', `translate(170,170)`);
     const inner = document.createElementNS('http://www.w3.org/2000/svg','g');
     inner.classList.add('vdot-inner');
     inner.setAttribute('transform', `translate(${Math.cos(angle)*baseRadius},${Math.sin(angle)*baseRadius})`);
     const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
-    circle.setAttribute('r','4');
+    circle.setAttribute('r', item.mini ? '3' : '4');
     circle.setAttribute('fill','#59D9C7');
     const text = document.createElementNS('http://www.w3.org/2000/svg','text');
-    text.setAttribute('x', angle > Math.PI/2 || angle < -Math.PI/2 ? -60 : 8);
+    text.setAttribute('x', angle > Math.PI/2 || angle < -Math.PI/2 ? -62 : 8);
     text.setAttribute('y', 3);
-    text.textContent = card.querySelector('h3').textContent.split(' ')[0];
+    text.textContent = item.card.querySelector('h3, h4').textContent.split(' ')[0].slice(0, 14);
     inner.appendChild(circle);
     inner.appendChild(text);
     g.appendChild(inner);
     dotLayer.appendChild(g);
-    return {el: inner, angle, baseRadius, card};
+    return {el: inner, angle, baseRadius, card: item.card, mini: item.mini};
   });
 
   // expose for the semantic-search module (upgrades scoring when the model is ready)
@@ -1060,36 +1074,38 @@ init();
   }
 
   function runQuery(q){
-    let maxScore = 0;
-    const scored = cards.map((card, i) => {
-      const s = score(q, card.dataset.tags);
-      maxScore = Math.max(maxScore, s);
-      return {card, s, i};
+    const qn = q.trim();
+    const entries = cards.map(card => {
+      const s = score(qn, card.dataset.tags);
+      return {card, s, dot: window.__vdotRegistry.find(d => d.card === card)};
     });
+    const max = Math.max(...entries.map(e => e.s), 1e-9);
 
-    scored.forEach(({card, s}) => {
+    entries.forEach(({card, s}) => {
       const fill = card.querySelector('[data-fill]');
       const label = card.querySelector('[data-label]');
       const pct = Math.round(s * 100);
       fill.style.width = pct + '%';
-      label.textContent = q.trim() ? `keyword overlap: ${pct}%` : 'keyword overlap: 0%';
-      card.classList.toggle('top-match', q.trim() !== '' && s > 0 && s === maxScore);
+      label.textContent = qn ? `keyword overlap: ${pct}%` : 'keyword overlap: 0%';
+      card.classList.toggle('top-match', qn !== '' && s > 0 && s === max);
     });
 
     // reorder by score
-    scored.sort((a,b) => b.s - a.s);
-    scored.forEach(({card}, idx) => { card.style.order = idx; });
+    entries.slice().sort((a,b) => b.s - a.s).forEach(({card}, idx) => { card.style.order = idx; });
 
-    // move vector dots: higher score -> closer to center
-    dots.forEach(d => {
-      const s = score(q, d.card.dataset.tags);
-      const radius = q.trim() ? (110 - s * 80) : 110;
+    // move vector dots: relative winner moves near the query, minis hold the orbit
+    window.__vdotRegistry.forEach(d => {
+      const e = entries.find(x => x.dot === d);
+      const norm = (e && qn && max > 0) ? e.s / max : 0;
+      const radius = 130 - norm * 92;
       const x = Math.cos(d.angle) * radius;
       const y = Math.sin(d.angle) * radius;
       d.el.setAttribute('transform', `translate(${x},${y})`);
-      d.el.parentElement.classList.toggle('lit', s > 0 && q.trim() !== '');
-      d.el.querySelector('circle').setAttribute('fill', s > 0.3 ? '#F4B860' : '#59D9C7');
+      d.el.parentElement.classList.toggle('lit', qn !== '' && norm > 0.15);
+      d.el.querySelector('circle').setAttribute('fill', norm > 0.7 ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', qn && norm < 0.2 ? '0' : '1');
     });
+    document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
   }
 
   input.addEventListener('input', () => { if (!window.__semanticReady) runQuery(input.value); });
