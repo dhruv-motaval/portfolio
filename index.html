@@ -881,18 +881,57 @@ const MINI_DOCS = Array.from(document.querySelectorAll("#more-projects .mini-car
   return {el: mc, chunks: [title + ". " + body]};
 });
 
-// light domain query expansion — classic IR trick, curated for this portfolio
+// light domain query expansion — classic IR trick, curated for this portfolio.
+// Every synonym/synonym-cluster a visitor might type, mapped to the portfolio's
+// own vocabulary so MiniLM lands on the right project even cross-vocabulary.
 const EXPANSIONS = [
-  [/outage|downtime|down\b/i, "incident failure alerts"],
-  [/pager|on-call|on call/i, "on-call triage incident"],
-  [/incident|triage/i, "outage pager on-call alerts ranking"],
-  [/\brag\b|retriev|document/i, "retrieval augmented generation documents chunking embeddings"],
-  [/agent|agentic|tool/i, "tool calling autonomous agent langgraph"],
-  [/chatbot|chat|persona/i, "chatbot conversational streaming persona"],
-  [/call|voice|phone|speech/i, "voice call speech whisper transcribe multilingual"],
-  [/meeting|minutes|notes/i, "meeting minutes transcription notes"],
-  [/model|ml|machine learning|prediction|disease/i, "machine learning model training prediction xgboost"],
-  [/deploy|cloud|docker/i, "docker containerized cloud deployment"],
+  // ExplainOps: incident triage / on-call / alerts / scoring
+  [/outage|downtime|down\b|crash|broken|failing|failure|error/i, "incident failure alerts"],
+  [/pager|on-call|on call|oncall|page\b/i, "on-call triage incident pager"],
+  [/incident|triage|sev\d?|p[1-4]\b|severity|alert|alarm|sre|ops\b|devops/i, "outage pager on-call alerts ranking triage"],
+  [/monitor|observ|log|metrics|uptime/i, "monitoring logs metrics observability audit trail incident ranking"],
+  [/latency|p95|response time|slow/i, "latency p95 performance optimization"],
+  [/score|rank|ranking|priority|urgency|explain/i, "scoring ranking urgency explainable attribution"],
+  // RAG document Q&A + local RAG
+  [/\brag\b|retriev|document|doc\b|pdf|files?|qa\b|q&a|question/i, "retrieval augmented generation documents chunking embeddings question answering"],
+  [/embed|vector|chroma|similarity|semantic|store/i, "embeddings vector database chroma semantic similarity search"],
+  [/chunk|ingest|parse|extract|split/i, "chunking ingestion parsing extraction pipeline"],
+  [/summar|answer|ask|query/i, "answers summarization grounded query"],
+  [/ollama|local(ly)? (llm|model)|offline/i, "local llm ollama offline inference"],
+  // Agents: LangGraph / tool calling / northstar / lead qual
+  [/agent|agentic|tool|function|autonom|workflow|state/i, "tool calling autonomous agent langgraph state machine workflow"],
+  [/lead|sales|book|qualif|crm|outreach/i, "sales lead qualification booking outreach agent"],
+  [/lesson|tutor|teach|learn(ing)? (content|generator)|self.?eval|judge|rubric|grade/i, "self-evaluating generator rubric llm-as-judge grading"],
+  [/ticket|rout|dispatch|escalat/i, "ticket routing escalation intent"],
+  // Call resolution / multilingual / voice
+  [/(^|[^-])calls?\b|phone|speech|audio|talk|ivr|twilio|voice/i, "voice call speech whisper transcribe telephony phone"],
+  [/transcri|speech.to.text|stt|whisper/i, "speech-to-text transcription whisper"],
+  [/multilingual|language|spanish|hindi|english|español|हिंदी|translate/i, "multilingual language detection spanish hindi english"],
+  [/intent|classif|detect|nlu/i, "intent recognition classification nlu"],
+  // Chatbot / LLM personas
+  [/chatbot|chat|persona|convers|dialog|bot\b/i, "chatbot conversational streaming persona"],
+  [/stream|token|typing|live response/i, "streaming tokens real-time responses"],
+  [/llm|gpt|llama|qwen|glm|deepseek|anthropic|openai|groq/i, "large language models openai groq api llama"],
+  [/prompt|system.?prompt|instruction/i, "prompt engineering system prompt design"],
+  [/hallucinat|fabricat|made up|grounded|guardrail|faithful/i, "hallucination mitigation grounded answers guardrails"],
+  [/memory|context window|history/i, "session memory context window"],
+  // Auto-MOM / meeting minutes
+  [/meeting|minutes|mom\b|notes|transcript/i, "meeting minutes transcription notes mom"],
+  [/attendee|participant|action item/i, "attendee detection action items ner"],
+  // ML / stroke / prediction
+  [/predict|model|ml\b|machine learning|train/i, "machine learning model training prediction xgboost"],
+  [/stroke|disease|health|patient|medical|clinical|risk/i, "stroke risk prediction patient healthcare"],
+  [/classif|logistic|random forest|gradient|xgboost|sklearn|scikit/i, "classification models scikit-learn xgboost comparison"],
+  [/roc|auc|f1|accuracy|evaluat|benchmark/i, "model evaluation roc-auc f1 accuracy benchmark"],
+  [/imbalanc|preprocess|feature|dataset|clean/i, "data preprocessing feature engineering imbalance"],
+  // Backend / infra / cloud
+  [/fastapi|api\b|rest|endpoint|backend|server|uvicorn/i, "fastapi rest api backend endpoints"],
+  [/docker|container|image|microservice/i, "docker containerization microservices"],
+  [/deploy|cloud|hosting|live|production|railway|netlify|spaces/i, "cloud deployment hugging face spaces railway netlify"],
+  [/ci\/?cd|github actions|pipeline|automation|test|pytest|unittest/i, "ci cd github actions pipeline automated testing pytest"],
+  [/git|branch|pull request|pr\b|merge|collaborat/i, "git feature branch pull requests collaboration"],
+  [/dashboard|ui\b|streamlit|gradio|frontend|interface/i, "streamlit gradio dashboard ui interface"],
+  [/hackathon|team|collab|pair/i, "hackathon team collaboration"],
   [/search/i, "semantic search vector retrieval"],
 ];
 function expandQuery(q){
