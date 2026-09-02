@@ -926,8 +926,11 @@ function applySemantic(){
     const vals = sims.map(x => x.s);
     const max = Math.max(...vals), min = Math.min(...vals);
     const span = (max - min) || 1e-9;
-    // relative normalization: only the best match pulls in, the rest hold their orbit
-    sims.forEach(x => { x.norm = (x.s - min) / span; });
+    // relevance gate: if even the best match is semantically weak, nothing moves
+    // (MiniLM: unrelated pairs ~0.05-0.25, related ~0.30-0.50, strong ~0.50+)
+    const pull = Math.max(0, Math.min(1, (max - 0.30) / 0.35));
+    // relative spread among the projects, scaled by overall relevance
+    sims.forEach(x => { x.norm = ((x.s - min) / span) * pull; });
     const best = sims.reduce((a, b) => (b.norm > a.norm ? b : a));
     // headline cards: bars + order
     sims.slice(0, DOCS.length).forEach(({d, s, norm}) => {
@@ -935,24 +938,24 @@ function applySemantic(){
       const label = d.card.querySelector('[data-label]');
       fill.style.width = Math.round(norm * 100) + '%';
       label.textContent = `semantic similarity: ${s.toFixed(3)}`;
-      d.card.classList.toggle('top-match', norm === 1);
+      d.card.classList.toggle('top-match', best.d === d && pull > 0.25);
     });
     sims.slice(0, DOCS.length).slice().sort((a, b) => b.norm - a.norm)
         .forEach(({d}, idx) => { d.card.style.order = idx; });
     // mini-cards: highlight the best only if it is genuinely competitive
     const bestMini = sims.filter(x => x.d.mini).sort((a, b) => b.norm - a.norm)[0];
     MINI_DOCS.forEach(m => { m.el.style.borderColor = ''; });
-    if (bestMini && bestMini.norm > 0.5) bestMini.d.card.style.borderColor = 'var(--accent)';
-    // vector space: winner moves near the query, everyone else holds their orbit
+    if (bestMini && bestMini.norm > 0.4) bestMini.d.card.style.borderColor = 'var(--accent)';
+    // vector space: winner moves near the query only when relevance clears the gate
     sims.forEach(({d, norm}) => {
       const radius = 130 - norm * 92;
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
-      d.el.parentElement.classList.toggle('lit', norm > 0.15);
-      d.el.querySelector('circle').setAttribute('fill', norm > 0.7 ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', norm < 0.2 ? '0' : '1');
+      d.el.parentElement.classList.toggle('lit', norm > 0.18);
+      d.el.querySelector('circle').setAttribute('fill', (norm > 0.6 && pull > 0.5) ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', (pull > 0.2 && norm < 0.2) ? '0' : '1');
     });
-    // the query pointer leans toward the best match
-    const off = 4 + 12 * best.norm;
+    // the query pointer leans toward the best match, proportionally to relevance
+    const off = 14 * best.norm;
     const vc = document.querySelector('.vcenter');
     vc.setAttribute('transform', `translate(${170 + Math.cos(best.d.angle)*off},${170 + Math.sin(best.d.angle)*off})`);
   });
