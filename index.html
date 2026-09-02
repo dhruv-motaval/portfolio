@@ -96,20 +96,23 @@
 
   /* ---------- SOCIAL ROW ---------- */
   .social-row{
-    display:flex; gap:12px; margin:18px 0 6px; flex-wrap:wrap;
+    display:flex; gap:10px; margin:18px 0 6px; flex-wrap:wrap;
   }
   .social-row a{
-    display:inline-flex; align-items:center; justify-content:center;
-    width:40px; height:40px; border-radius:9px;
+    display:inline-flex; align-items:center; gap:8px;
+    padding:9px 15px; border-radius:9px;
     border:1px solid var(--border); background:var(--surface);
-    transition:border-color .2s ease, transform .2s ease, background .2s ease;
+    font-family:var(--mono); font-size:12.5px; font-weight:600;
+    color:var(--text-dim); text-decoration:none;
+    transition:border-color .2s ease, transform .2s ease, background .2s ease, color .2s ease;
   }
   .social-row a:hover{
     border-color:var(--accent); transform:translateY(-2px);
-    background:var(--surface-2);
+    background:var(--surface-2); color:var(--text);
   }
-  .social-row img{width:19px; height:19px; opacity:0.72; transition:opacity .2s ease;}
+  .social-row img{width:16px; height:16px; opacity:0.72; transition:opacity .2s ease;}
   .social-row a:hover img{opacity:1;}
+  .social-row svg{width:17px; height:17px; flex-shrink:0;}
 
   /* ---------- SECTION SHELL ---------- */
   section{padding:64px 0;}
@@ -443,20 +446,20 @@
       <p class="hero-sub stream-text">I build RAG systems, LLM agents, and voice pipelines: from PDF chunking and vector retrieval up through tool-calling agents and phone calls handled end to end.</p>
 
       <div class="social-row" aria-label="Profile links">
-        <a href="https://github.com/dhruv-motaval" target="_blank" rel="noopener" title="GitHub" aria-label="GitHub">
-          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/github.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);">
+        <a href="https://github.com/dhruv-motaval" target="_blank" rel="noopener" title="GitHub">
+          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/github.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);"><span>GitHub</span>
         </a>
-        <a href="https://huggingface.co/MotavalD" target="_blank" rel="noopener" title="Hugging Face" aria-label="Hugging Face">
-          <svg width="19" height="19" viewBox="0 0 24 24" fill="#F4B860"><circle cx="12" cy="12" r="10" fill="none" stroke="#F4B860" stroke-width="1.6"/><circle cx="8.4" cy="10" r="1.15"/><circle cx="15.6" cy="10" r="1.15"/><path d="M7.6 13.6c.9 1.7 2.5 2.7 4.4 2.7s3.5-1 4.4-2.7" fill="none" stroke="#F4B860" stroke-width="1.5" stroke-linecap="round"/></svg>
+        <a href="https://huggingface.co/MotavalD" target="_blank" rel="noopener" title="Hugging Face">
+          <svg viewBox="0 0 24 24" fill="#F4B860"><circle cx="12" cy="12" r="10" fill="none" stroke="#F4B860" stroke-width="1.6"/><circle cx="8.4" cy="10" r="1.15"/><circle cx="15.6" cy="10" r="1.15"/><path d="M7.6 13.6c.9 1.7 2.5 2.7 4.4 2.7s3.5-1 4.4-2.7" fill="none" stroke="#F4B860" stroke-width="1.5" stroke-linecap="round"/></svg><span>Hugging Face</span>
         </a>
-        <a href="https://linkedin.com/in/dhruv-motaval" target="_blank" rel="noopener" title="LinkedIn" aria-label="LinkedIn">
-          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linkedin.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);">
+        <a href="https://linkedin.com/in/dhruv-motaval" target="_blank" rel="noopener" title="LinkedIn">
+          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/linkedin.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);"><span>LinkedIn</span>
         </a>
-        <a href="https://x.com/Dhruv_Motaval14" target="_blank" rel="noopener" title="X (Twitter)" aria-label="X (Twitter)">
-          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);">
+        <a href="https://x.com/Dhruv_Motaval14" target="_blank" rel="noopener" title="X (Twitter)">
+          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/x.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);"><span>X (Twitter)</span>
         </a>
-        <a href="mailto:dhruvmotaval30@gmail.com" title="Email" aria-label="Email">
-          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/gmail.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);">
+        <a href="mailto:dhruvmotaval30@gmail.com" title="Email">
+          <img src="https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/gmail.svg" alt="" loading="lazy" style="filter:invert(74%) sepia(38%) saturate(566%) hue-rotate(347deg) brightness(103%) contrast(96%);"><span>Email</span>
         </a>
       </div>
 
@@ -979,3 +982,5 @@
 
 </body>
 </html>
+
+<!-- touch 2131590 -->
