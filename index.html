@@ -193,6 +193,12 @@
     font-family:var(--mono); font-size:12px; color:var(--text-faint);
     margin:0 0 10px;
   }
+  .search-label .emb-status{
+    display:inline-block; margin-left:8px; padding:1px 8px; border-radius:10px;
+    font-size:10px; border:1px solid var(--border); color:var(--text-faint);
+  }
+  .search-label .emb-status.loading{color:var(--accent); border-color:var(--accent);}
+  .search-label .emb-status.ready{color:var(--teal); border-color:var(--teal);}
   .search-input-row{display:flex; gap:10px; align-items:center;}
   .search-input-row input{
     flex:1; background:var(--bg-alt); border:1px solid var(--border);
@@ -471,7 +477,7 @@
 
       <div class="hero-bottom">
         <div class="search-box">
-          <p class="search-label">$ query the projects below</p>
+          <p class="search-label">$ semantic search over the projects below <span class="emb-status" id="embStatus">loading model</span></p>
           <div class="search-input-row">
             <input id="searchInput" type="text" placeholder="try: hybrid search, voice agent, classical ml..." aria-label="Search projects by keyword" />
           </div>
@@ -481,7 +487,7 @@
             <button class="chip" data-q="classical machine learning xgboost">classical ml</button>
             <button class="chip" data-q="chatbot persona streaming">chatbot</button>
           </div>
-          <p class="search-note">Naive keyword overlap against each project's tags, run in your browser, not the actual embeddings/RAG stack that runs in the projects themselves.</p>
+          <p class="search-note" id="searchNote">Real semantic search: cosine similarity over 384-dim embeddings from all-MiniLM-L6-v2 (same model family as my RAG projects) running locally in your tab via transformers.js — no server, no API key. ~23MB model download on first visit, cached afterwards.</p>
         </div>
 
         <div class="vspace" aria-hidden="true">
@@ -848,6 +854,159 @@
   <div class="wrap">built to show what's shipped and what's still in progress, no inflated claims either way</div>
 </footer>
 
+<script type="module">
+// ============================================================
+// REAL SEMANTIC SEARCH — all-MiniLM-L6-v2 in the browser
+// 384-dim embeddings, cosine similarity, via transformers.js
+// ============================================================
+const DOCS = Array.from(document.querySelectorAll('#projectGrid .card')).map(card => {
+  const title = card.querySelector('h3').textContent.trim();
+  const tagline = card.querySelector('.tagline')?.textContent.trim() || '';
+  const body = card.querySelector('.metric')?.textContent.trim() || '';
+  const chips = Array.from(card.querySelectorAll('.stack-chip')).map(c => c.textContent.trim());
+  return {card, text: [title, title, tagline, chips.join(', '), body].join('. ')};
+});
+const MINI_DOCS = Array.from(document.querySelectorAll('#more-projects .mini-card')).map(mc => ({
+  el: mc,
+  text: [mc.querySelector('h4')?.textContent.trim(), mc.querySelector('p')?.textContent.trim()].join('. ')
+}));
+
+const statusEl = document.getElementById('embStatus');
+const noteEl = document.getElementById('searchNote');
+const input = document.getElementById('searchInput');
+let embed = null;
+let docVecs = [];
+let miniVecs = [];
+let lastQuery = '';
+
+const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]*b[i]; return s; };
+const cosine = (a, b) => dot(a, b) / (Math.hypot(...a) * Math.hypot(...b) || 1);
+
+function setStatus(cls, txt){ if(statusEl){ statusEl.className = 'emb-status ' + cls; statusEl.textContent = txt; } }
+
+function applySemantic(){
+  if (!embed) return;
+  const q = input.value.trim();
+  lastQuery = q;
+  if (!q){
+    DOCS.forEach(({card}) => {
+      const fill = card.querySelector('[data-fill]');
+      const label = card.querySelector('[data-label]');
+      fill.style.width = '0%';
+      label.textContent = 'semantic similarity: —';
+      card.classList.remove('top-match');
+      card.style.order = '';
+    });
+    document.querySelectorAll('#more-projects .mini-card').forEach(mc => { mc.style.order=''; mc.style.borderColor=''; });
+    window.__vdotRegistry.forEach(d => {
+      d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*110},${Math.sin(d.angle)*110})`);
+      d.el.parentElement.classList.remove('lit');
+      d.el.querySelector('circle').setAttribute('fill', '#59D9C7');
+    });
+    return;
+  }
+  embed(q).then(qvec => {
+    const qv = qvec.data ?? qvec;
+    const scored = DOCS.map(({card, text}, i) => ({card, s: cosine(qv, docVecs[i])}));
+    const max = Math.max(...scored.map(x => x.s), 1e-9);
+    scored.forEach(({card, s}) => {
+      const fill = card.querySelector('[data-fill]');
+      const label = card.querySelector('[data-label]');
+      const norm = Math.max(0, (s - 0.05) / 0.6);  // cosine in ~[0.05,0.65] band → 0..1
+      fill.style.width = Math.min(100, Math.round(norm * 100)) + '%';
+      label.textContent = `semantic similarity: ${s.toFixed(3)}`;
+      card.classList.toggle('top-match', s === Math.max(...scored.map(x => x.s)));
+    });
+    scored.sort((a,b) => b.s - a.s);
+    scored.forEach(({card}, idx) => { card.style.order = idx; });
+    // mini-cards: highlight best if it beats headline cards
+    if (MINI_DOCS.length && miniVecs.length){
+      const mScored = MINI_DOCS.map((m, i) => ({m, s: cosine(qv, miniVecs[i])}));
+      mScored.sort((a,b) => b.s - a.s);
+      const bestMini = mScored[0];
+      const worstHeadline = Math.min(...scored.map(x => x.s));
+      mScored.forEach(({m, s}, idx) => {
+        m.el.style.order = idx;
+        m.el.style.borderColor = (bestMini && s > worstHeadline && idx === 0) ? 'var(--accent)' : '';
+      });
+    }
+    // vector space: normalized similarity → radius, gold when close
+    window.__vdotRegistry.forEach((d, i) => {
+      const s = scored.find(x => x.card === d.card)?.s ?? 0;
+      const norm = Math.max(0, (s - 0.05) / 0.6);
+      const radius = 110 - norm * 82;
+      d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
+      d.el.parentElement.classList.toggle('lit', norm > 0.15);
+      d.el.querySelector('circle').setAttribute('fill', norm > 0.3 ? '#F4B860' : '#59D9C7');
+    });
+  });
+}
+
+async function init(){
+  try {
+    setStatus('loading', 'loading model');
+    const {pipeline, env} = await import('https://cdn.jsdelivr.net/npm/@xenova/transformers@2.17.2');
+    env.allowLocalModels = false;
+    embed = await pipeline('feature-extraction', 'Xenova/all-MiniLM-L6-v2', {
+      quantized: true,
+      progress_callback: p => {
+        if (p.status === 'progress' && p.total){
+          setStatus('loading', `model ${Math.round(p.progress)}%`);
+        }
+      }
+    });
+    // embed corpus once
+    const docs = DOCS.map(d => d.text).concat(MINI_DOCS.map(m => m.text));
+    const out = await embed(docs, {pooling: 'mean', normalize: true});
+    docVecs = docs.map((_, i) => Array.from(out[i].data ?? out[i]));
+    miniVecs = docVecs.slice(DOCS.length);
+    docVecs = docVecs.slice(0, DOCS.length);
+    setStatus('ready', 'semantic ✓');
+    if (noteEl) noteEl.textContent = 'Real semantic search live: cosine similarity over 384-dim all-MiniLM-L6-v2 embeddings, computed in your browser — the same model family powering my RAG projects. Try a synonym the cards never mention, e.g. "payment outage pager duty".';
+    window.__semanticReady = true;
+    if (input.value.trim()) applySemantic();
+  } catch (err) {
+    setStatus('', 'keyword fallback');
+    if (noteEl) noteEl.textContent = 'Semantic model could not load in this browser — falling back to keyword matching. (Transformers.js requires WASM; all major modern browsers are supported.)';
+    // wire keyword fallback
+    const cards = window.__cardRegistry;
+    const fallback = () => {
+      const q = input.value.trim().toLowerCase();
+      if (!q){
+        cards.forEach(c => { c.querySelector('[data-fill]').style.width='0%'; c.querySelector('[data-label]').textContent='keyword overlap: 0%'; c.classList.remove('top-match'); c.style.order=''; });
+        return;
+      }
+      const tokens = q.split(/\s+/).filter(Boolean);
+      const scored = cards.map(c => {
+        const hay = (c.dataset.tags + ' ' + c.textContent).toLowerCase();
+        const s = tokens.filter(t => hay.includes(t)).length / tokens.length;
+        return {c, s};
+      });
+      const max = Math.max(...scored.map(x=>x.s), 1e-9);
+      scored.forEach(({c, s}) => {
+        c.querySelector('[data-fill]').style.width = Math.round(s*100)+'%';
+        c.querySelector('[data-label]').textContent = `keyword overlap: ${Math.round(s*100)}%`;
+        c.classList.toggle('top-match', s === max);
+      });
+      scored.sort((a,b)=>b.s-a.s);
+      scored.forEach(({c},i)=>{c.style.order=i;});
+    };
+    input.addEventListener('input', fallback);
+  }
+}
+
+// debounce input for the semantic path
+let deb;
+const origInput = input;
+origInput.addEventListener('input', () => {
+  if (!window.__semanticReady) return; // fallback listener handles pre-model
+  clearTimeout(deb);
+  deb = setTimeout(applySemantic, 120);
+});
+
+init();
+</script>
+
 <script>
 (function(){
   const cards = Array.from(document.querySelectorAll('.card'));
@@ -878,7 +1037,13 @@
     return {el: inner, angle, baseRadius, card};
   });
 
+  // expose for the semantic-search module (upgrades scoring when the model is ready)
+  window.__vdotRegistry = dots;
+  window.__cardRegistry = cards;
+  window.__semanticReady = false;
+
   function score(query, tags){
+    if (window.__semanticReady) return 0; // semantic module takes over scoring
     const qTokens = query.toLowerCase().split(/\s+/).filter(Boolean);
     if(qTokens.length === 0) return 0;
     const tagSet = tags.toLowerCase();
@@ -920,12 +1085,12 @@
     });
   }
 
-  input.addEventListener('input', () => runQuery(input.value));
+  input.addEventListener('input', () => { if (!window.__semanticReady) runQuery(input.value); });
   chips.forEach(chip => {
     chip.addEventListener('click', () => {
       input.value = chip.dataset.q;
+      input.dispatchEvent(new Event('input', {bubbles:true}));
       input.focus();
-      runQuery(chip.dataset.q);
     });
   });
 
