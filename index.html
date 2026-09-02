@@ -864,17 +864,42 @@
 // REAL SEMANTIC SEARCH — all-MiniLM-L6-v2 in the browser
 // 384-dim embeddings, cosine similarity, via transformers.js
 // ============================================================
-const DOCS = Array.from(document.querySelectorAll('#projectGrid .card')).map(card => {
-  const title = card.querySelector('h3').textContent.trim();
-  const tagline = card.querySelector('.tagline')?.textContent.trim() || '';
-  const body = card.querySelector('.metric')?.textContent.trim() || '';
-  const chips = Array.from(card.querySelectorAll('.stack-chip')).map(c => c.textContent.trim());
-  return {card, text: [title, title, tagline, chips.join(', '), body].join('. ')};
+const cleanText = s => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/<[^>]+>/g, " ").replace(/\s+/g, " ").trim();
+const DOCS = Array.from(document.querySelectorAll("#projectGrid .card")).map(card => {
+  const title = cleanText(card.querySelector("h3")?.textContent || "");
+  const tagline = cleanText(card.querySelector(".tagline")?.textContent || "");
+  const body = cleanText(card.querySelector(".metric")?.textContent || "");
+  const chips = Array.from(card.querySelectorAll(".stack-chip")).map(c => c.textContent.trim()).join(", ");
+  // chunked corpus: title/tagline chunk + sliding body chunks (fixes long-doc dilution)
+  const chunks = [title + ". " + tagline + ". Stack: " + chips];
+  for (let i = 0; i < body.length; i += 220) chunks.push(title + ". " + body.slice(i, i + 220));
+  return {card, chunks};
 });
-const MINI_DOCS = Array.from(document.querySelectorAll('#more-projects .mini-card')).map(mc => ({
-  el: mc,
-  text: [mc.querySelector('h4')?.textContent.trim(), mc.querySelector('p')?.textContent.trim()].join('. ')
-}));
+const MINI_DOCS = Array.from(document.querySelectorAll("#more-projects .mini-card")).map(mc => {
+  const title = cleanText(mc.querySelector("h4")?.textContent || "");
+  const body = cleanText(mc.querySelector("p")?.textContent || "");
+  return {el: mc, chunks: [title + ". " + body]};
+});
+
+// light domain query expansion — classic IR trick, curated for this portfolio
+const EXPANSIONS = [
+  [/outage|downtime|down\b/i, "incident failure alerts"],
+  [/pager|on-call|on call/i, "on-call triage incident"],
+  [/incident|triage/i, "outage pager on-call alerts ranking"],
+  [/\brag\b|retriev|document/i, "retrieval augmented generation documents chunking embeddings"],
+  [/agent|agentic|tool/i, "tool calling autonomous agent langgraph"],
+  [/chatbot|chat|persona/i, "chatbot conversational streaming persona"],
+  [/call|voice|phone|speech/i, "voice call speech whisper transcribe multilingual"],
+  [/meeting|minutes|notes/i, "meeting minutes transcription notes"],
+  [/model|ml|machine learning|prediction|disease/i, "machine learning model training prediction xgboost"],
+  [/deploy|cloud|docker/i, "docker containerized cloud deployment"],
+  [/search/i, "semantic search vector retrieval"],
+];
+function expandQuery(q){
+  let extra = "";
+  for (const [re, exp] of EXPANSIONS) if (re.test(q)) extra += " " + exp;
+  return q + extra;
+}
 
 const statusEl = document.getElementById('embStatus');
 const noteEl = document.getElementById('searchNote');
@@ -916,15 +941,17 @@ function applySemantic(){
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
     return;
   }
-  embed(q, {pooling: 'mean', normalize: true}).then(qvec => {
+  embed(expandQuery(q), {pooling: 'mean', normalize: true}).then(qvec => {
     try {
     if (mySeq !== seq) { return; }
     const qv = Array.from(qvec.data).slice(0, embDim || qvec.data.length);
-    // score every dot (headline + mini) against the query
-    const sims = registry.map((d, i) => ({
-      d,
-      s: d.mini ? cosine(qv, miniVecs[i - DOCS.length]) : cosine(qv, docVecs[i])
-    }));
+    // score every dot (headline + mini) against the query: max over the card's chunks
+    const sims = registry.map((d, i) => {
+      const vecs = d.mini ? miniVecs[i - DOCS.length] : docVecs[i];
+      let s = -1;
+      for (const v of vecs) s = Math.max(s, cosine(qv, v));
+      return {d, s};
+    });
     const bestS = sims.reduce((m, x) => Math.max(m, x.s), -Infinity);
     if (!Number.isFinite(bestS)) { setStatus('', 'model error'); console.error('[semantic] non-finite similarities — embedding pipeline broken'); return; }
     const vals = sims.map(x => x.s);
@@ -1002,20 +1029,20 @@ async function init(){
         }
       }
     });
-    // embed corpus once — batch output is ONE tensor [n, dim]; slice raw data
-    const docs = DOCS.map(d => d.text).concat(MINI_DOCS.map(m => m.text));
-    const out = await embed(docs, {pooling: 'mean', normalize: true});
+    // embed chunk corpus once — batch output is ONE tensor [n, dim]; slice raw data
+    const allChunks = DOCS.map(d => d.chunks).flat().concat(MINI_DOCS.map(m => m.chunks).flat());
+    const out = await embed(allChunks, {pooling: 'mean', normalize: true});
     embDim = out.dims[out.dims.length - 1];
     const vecAt = i => Array.from(out.data.slice(i * embDim, (i + 1) * embDim));
-    docVecs = docs.map((_, i) => vecAt(i));
-    miniVecs = docVecs.slice(DOCS.length);
-    docVecs = docVecs.slice(0, DOCS.length);
-    // validate: NaN/empty vectors would silently freeze the whole graph
-    const allVecs = docVecs.concat(miniVecs);
-    const badVec = allVecs.findIndex(v => !v.length || !v.every(Number.isFinite));
-    if (badVec !== -1 || !docVecs.length) throw new Error('invalid embeddings at index ' + badVec);
+    const chunkVecs = allChunks.map((_, i) => vecAt(i));
+    const badVec = chunkVecs.findIndex(v => !v.every(Number.isFinite));
+    if (badVec !== -1) throw new Error('invalid embeddings at chunk ' + badVec);
+    docVecs = []; miniVecs = [];
+    let ci = 0;
+    DOCS.forEach(d => { docVecs.push(chunkVecs.slice(ci, ci + d.chunks.length)); ci += d.chunks.length; });
+    MINI_DOCS.forEach(m => { miniVecs.push(chunkVecs.slice(ci, ci + m.chunks.length)); ci += m.chunks.length; });
     setStatus('ready', 'semantic ✓');
-    if (noteEl) noteEl.textContent = 'Real semantic search live: cosine similarity over 384-dim all-MiniLM-L6-v2 embeddings, computed in your browser — the same model family powering my RAG projects. Try "chatbot", "meeting notes pdf", or "incident pager triage".';
+    if (noteEl) noteEl.textContent = 'Real semantic search live: chunk-level embeddings (all-MiniLM-L6-v2, 384-dim) with max-pooling and light query expansion, computed in your browser — the same model family powering my RAG projects. Try "outage pager", "meeting notes pdf" or "predict disease".';
     window.__semanticReady = true;
     if (input.value.trim()) applySemantic();
   } catch (err) {
