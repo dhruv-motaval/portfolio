@@ -882,6 +882,7 @@ const input = document.getElementById('searchInput');
 let embed = null;
 let docVecs = [];
 let miniVecs = [];
+let embDim = 0;
 let lastQuery = '';
 let seq = 0;  // guards against stale async embedding results
 
@@ -917,12 +918,14 @@ function applySemantic(){
   }
   embed(q).then(qvec => {
     if (mySeq !== seq) return;  // a newer query already superseded this result
-    const qv = qvec.data ?? qvec;
+    const qv = Array.from(qvec.data).slice(0, embDim || qvec.data.length);
     // score every dot (headline + mini) against the query
     const sims = registry.map((d, i) => ({
       d,
       s: d.mini ? cosine(qv, miniVecs[i - DOCS.length]) : cosine(qv, docVecs[i])
     }));
+    const bestS = sims.reduce((a, b) => (b.s > a.s ? b : a), {s: NaN}).s;
+    if (!Number.isFinite(bestS)) return;  // vector failure must not freeze the graph
     const vals = sims.map(x => x.s);
     // per-dot absolute matching: only a project whose own similarity clears the
     // floor comes toward the query; everyone else holds the orbit. No relative
@@ -977,14 +980,18 @@ async function init(){
         }
       }
     });
-    // embed corpus once
+    // embed corpus once — batch output is ONE tensor [n, dim]; slice raw data
     const docs = DOCS.map(d => d.text).concat(MINI_DOCS.map(m => m.text));
     const out = await embed(docs, {pooling: 'mean', normalize: true});
-    docVecs = docs.map((_, i) => Array.from(out[i].data ?? out[i]));
+    embDim = out.dims[out.dims.length - 1];
+    const vecAt = i => Array.from(out.data.slice(i * embDim, (i + 1) * embDim));
+    docVecs = docs.map((_, i) => vecAt(i));
     miniVecs = docVecs.slice(DOCS.length);
     docVecs = docVecs.slice(0, DOCS.length);
+    // validate: NaN/empty vectors would silently freeze the whole graph
+    if (!docVecs.length || !Number.isFinite(docVecs[0][0])) throw new Error('invalid embeddings');
     setStatus('ready', 'semantic ✓');
-    if (noteEl) noteEl.textContent = 'Real semantic search live: cosine similarity over 384-dim all-MiniLM-L6-v2 embeddings, computed in your browser — the same model family powering my RAG projects. Try a synonym the cards never mention, e.g. "payment outage pager duty".';
+    if (noteEl) noteEl.textContent = 'Real semantic search live: cosine similarity over 384-dim all-MiniLM-L6-v2 embeddings, computed in your browser — the same model family powering my RAG projects. Try "chatbot", "meeting notes pdf", or "incident pager triage".';
     window.__semanticReady = true;
     if (input.value.trim()) applySemantic();
   } catch (err) {
