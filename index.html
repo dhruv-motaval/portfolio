@@ -916,16 +916,17 @@ function applySemantic(){
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
     return;
   }
-  embed(q).then(qvec => {
-    if (mySeq !== seq) return;  // a newer query already superseded this result
+  embed(q, {pooling: 'mean', normalize: true}).then(qvec => {
+    try {
+    if (mySeq !== seq) { return; }
     const qv = Array.from(qvec.data).slice(0, embDim || qvec.data.length);
     // score every dot (headline + mini) against the query
     const sims = registry.map((d, i) => ({
       d,
       s: d.mini ? cosine(qv, miniVecs[i - DOCS.length]) : cosine(qv, docVecs[i])
     }));
-    const bestS = sims.reduce((a, b) => (b.s > a.s ? b : a), {s: NaN}).s;
-    if (!Number.isFinite(bestS)) return;  // vector failure must not freeze the graph
+    const bestS = sims.reduce((m, x) => Math.max(m, x.s), -Infinity);
+    if (!Number.isFinite(bestS)) { setStatus('', 'model error'); console.error('[semantic] non-finite similarities — embedding pipeline broken'); return; }
     const vals = sims.map(x => x.s);
     // per-dot absolute matching: only a project whose own similarity clears the
     // floor comes toward the query; everyone else holds the orbit. No relative
@@ -964,6 +965,13 @@ function applySemantic(){
     });
     // query pointer never moves
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
+    } catch (err) {
+      console.error('[semantic] ERROR in scoring:', err.message);
+      setStatus('', 'model error');
+    }
+  }).catch(err => {
+    console.error('[semantic] embed(q) rejected:', err.message);
+    setStatus('', 'model error');
   });
 }
 
@@ -989,7 +997,9 @@ async function init(){
     miniVecs = docVecs.slice(DOCS.length);
     docVecs = docVecs.slice(0, DOCS.length);
     // validate: NaN/empty vectors would silently freeze the whole graph
-    if (!docVecs.length || !Number.isFinite(docVecs[0][0])) throw new Error('invalid embeddings');
+    const allVecs = docVecs.concat(miniVecs);
+    const badVec = allVecs.findIndex(v => !v.length || !v.every(Number.isFinite));
+    if (badVec !== -1 || !docVecs.length) throw new Error('invalid embeddings at index ' + badVec);
     setStatus('ready', 'semantic ✓');
     if (noteEl) noteEl.textContent = 'Real semantic search live: cosine similarity over 384-dim all-MiniLM-L6-v2 embeddings, computed in your browser — the same model family powering my RAG projects. Try "chatbot", "meeting notes pdf", or "incident pager triage".';
     window.__semanticReady = true;
@@ -1031,6 +1041,11 @@ origInput.addEventListener('input', () => {
   if (!window.__semanticReady) return; // fallback listener handles pre-model
   clearTimeout(deb);
   deb = setTimeout(applySemantic, 120);
+});
+window.__semanticDebug = () => ({
+  embed: !!embed, embDim, docVecs: docVecs.length, miniVecs: miniVecs.length,
+  seq, lastQuery, semanticReady: window.__semanticReady,
+  registry: (window.__vdotRegistry || []).length
 });
 
 init();
@@ -1075,7 +1090,6 @@ init();
   window.__vdotRegistry = dots;
   window.__cardRegistry = cards;
   window.__semanticReady = false;
-
   function score(query, tags){
     if (window.__semanticReady) return 0; // semantic module takes over scoring
     const qTokens = query.toLowerCase().split(/\s+/).filter(Boolean);

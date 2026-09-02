@@ -1,8 +1,10 @@
 """Live-reload dev server for the portfolio.
 
 Serves the repo directory; injects a tiny polling snippet into index.html that
-checks /__version every 600ms and reloads the tab when index.html changes.
+checks /__version every 1s and reloads the tab only when the file CONTENT
+actually changes (hash-based, immune to OneDrive/sync mtime touches).
 """
+import hashlib
 import http.server
 import os
 import socketserver
@@ -12,26 +14,34 @@ import time
 ROOT = os.path.dirname(os.path.abspath(__file__))
 PORT = 8765
 state = {"version": 0}
+lock = threading.Lock()
 
 SNIPPET = (
-    "<script>(function(){var v=0;setInterval(function(){"
+    "<script>(function(){var v=null;setInterval(function(){"
     "fetch('/__version',{cache:'no-store'}).then(function(r){return r.text()})"
-    ".then(function(t){var n=parseInt(t,10);if(v&&n>v)location.reload();v=n;})"
-    ".catch(function(){});},600);})();</script>"
+    ".then(function(t){var n=parseInt(t,10);"
+    "if(v!==null&&n>v){location.reload();}"
+    "v=n;}).catch(function(){});},1000);})();</script>"
 )
 
 
+def file_hash(path):
+    try:
+        with open(path, "rb") as f:
+            return hashlib.sha256(f.read()).hexdigest()
+    except OSError:
+        return None
+
+
 def watch():
-    last = None
+    last = file_hash(os.path.join(ROOT, "index.html"))
     while True:
-        try:
-            m = os.path.getmtime(os.path.join(ROOT, "index.html"))
-            if last is not None and m != last:
+        time.sleep(1.0)
+        h = file_hash(os.path.join(ROOT, "index.html"))
+        if h is not None and h != last:
+            with lock:
                 state["version"] += 1
-            last = m
-        except OSError:
-            pass
-        time.sleep(0.4)
+            last = h
 
 
 class LiveHandler(http.server.SimpleHTTPRequestHandler):
@@ -41,7 +51,8 @@ class LiveHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         path = self.path.split("?")[0]
         if path == "/__version":
-            body = str(state["version"]).encode()
+            with lock:
+                body = str(state["version"]).encode()
             self.send_response(200)
             self.send_header("Content-Type", "text/plain")
             self.send_header("Cache-Control", "no-store")
