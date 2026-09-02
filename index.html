@@ -947,13 +947,17 @@ function applySemantic(){
     // mini-cards: highlight the best only if it actually matches
     MINI_DOCS.forEach(m => { m.el.style.borderColor = ''; });
     if (best.matched && best.d.mini) best.d.card.style.borderColor = 'var(--accent)';
-    // vector space: matched projects move in, unmatched hold the orbit, query fixed
-    sims.forEach(({d, norm, matched}) => {
-      const radius = 130 - norm * 92;
+    // vector space: matched projects take evenly spaced approach rings so they
+    // never crowd the central query marker; unmatched hold the outer orbit.
+    const matchedList = sims.filter(x => x.matched).sort((a, b) => b.s - a.s);
+    const MIN_R = 52, RING_GAP = 16;
+    matchedList.forEach((x, k) => { x.radius = Math.min(MIN_R + k * RING_GAP, 122); });
+    sims.forEach(x => { if (x.radius === undefined) x.radius = 130; });
+    sims.forEach(({d, radius, matched}) => {
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
       d.el.parentElement.classList.toggle('lit', matched);
       d.el.querySelector('circle').setAttribute('fill', (matched && best.d === d) ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', (matched && norm > 0.75) ? '0' : '1');
+      d.el.querySelector('text').setAttribute('opacity', (matched && radius < 62) ? '0' : '1');
     });
     // query pointer never moves
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
@@ -1099,18 +1103,21 @@ init();
     entries.slice().sort((a, b) => (b.matched - a.matched) || (b.s - a.s))
       .forEach(({card}, idx) => { card.style.order = idx; });
 
-    // vector dots: matched projects come in, unmatched hold the orbit, query fixed
+    // vector dots: matched projects take spaced approach rings (no crowding the
+    // central query marker); unmatched hold the outer orbit. Query stays fixed.
+    const matchedList = entries.filter(x => x.matched).sort((a, b) => b.s - a.s);
+    const MIN_R = 52, RING_GAP = 16;
+    matchedList.forEach((x, k) => { x.radius = Math.min(MIN_R + k * RING_GAP, 122); });
     window.__vdotRegistry.forEach(d => {
       const e = entries.find(x => x.dot === d);
-      const norm = (qn && e) ? e.norm : 0;
-      const matched = qn && e ? e.matched : false;
-      const radius = 130 - norm * 92;
+      const radius = (e && e.radius !== undefined) ? e.radius : 130;
+      const matched = e ? e.matched : false;
       const x = Math.cos(d.angle) * radius;
       const y = Math.sin(d.angle) * radius;
       d.el.setAttribute('transform', `translate(${x},${y})`);
       d.el.parentElement.classList.toggle('lit', matched);
       d.el.querySelector('circle').setAttribute('fill', (matched && best.card === d.card) ? '#F4B860' : '#59D9C7');
-      d.el.querySelector('text').setAttribute('opacity', (matched && norm > 0.75) ? '0' : '1');
+      d.el.querySelector('text').setAttribute('opacity', (matched && radius < 62) ? '0' : '1');
     });
     document.querySelector('.vcenter').setAttribute('transform', 'translate(170,170)');
   }
