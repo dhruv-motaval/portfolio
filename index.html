@@ -174,10 +174,11 @@
   .vspace svg{width:100%; height:100%; overflow:visible;}
   .vgrid line{stroke:var(--border); stroke-width:1;}
   .vdot{transition:transform .6s cubic-bezier(.2,.8,.2,1);}
+  .vdot-inner{transition:transform .6s cubic-bezier(.2,.8,.2,1);}
   .vdot circle{transition:fill .4s ease, r .4s ease;}
   .vdot text{
     font-family:var(--mono); font-size:9px; fill:var(--text-faint);
-    transition:fill .4s ease;
+    transition:fill .4s ease, opacity .4s ease;
   }
   .vdot.lit text{fill:var(--text);}
   .vcenter circle{fill:var(--accent);}
@@ -878,6 +879,7 @@ let embed = null;
 let docVecs = [];
 let miniVecs = [];
 let lastQuery = '';
+let seq = 0;  // guards against stale async embedding results
 
 const dot = (a, b) => { let s = 0; for (let i = 0; i < a.length; i++) s += a[i]*b[i]; return s; };
 const cosine = (a, b) => dot(a, b) / (Math.hypot(...a) * Math.hypot(...b) || 1);
@@ -888,6 +890,7 @@ function applySemantic(){
   if (!embed) return;
   const q = input.value.trim();
   lastQuery = q;
+  const mySeq = ++seq;
   if (!q){
     DOCS.forEach(({card}) => {
       const fill = card.querySelector('[data-fill]');
@@ -902,10 +905,12 @@ function applySemantic(){
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*110},${Math.sin(d.angle)*110})`);
       d.el.parentElement.classList.remove('lit');
       d.el.querySelector('circle').setAttribute('fill', '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', '1');
     });
     return;
   }
   embed(q).then(qvec => {
+    if (mySeq !== seq) return;  // a newer query already superseded this result
     const qv = qvec.data ?? qvec;
     const scored = DOCS.map(({card, text}, i) => ({card, s: cosine(qv, docVecs[i])}));
     const max = Math.max(...scored.map(x => x.s), 1e-9);
@@ -930,7 +935,7 @@ function applySemantic(){
         m.el.style.borderColor = (bestMini && s > worstHeadline && idx === 0) ? 'var(--accent)' : '';
       });
     }
-    // vector space: normalized similarity → radius, gold when close
+    // vector space: normalized similarity → radius, gold when close, labels fade near center
     window.__vdotRegistry.forEach((d, i) => {
       const s = scored.find(x => x.card === d.card)?.s ?? 0;
       const norm = Math.max(0, (s - 0.05) / 0.6);
@@ -938,6 +943,7 @@ function applySemantic(){
       d.el.setAttribute('transform', `translate(${Math.cos(d.angle)*radius},${Math.sin(d.angle)*radius})`);
       d.el.parentElement.classList.toggle('lit', norm > 0.15);
       d.el.querySelector('circle').setAttribute('fill', norm > 0.3 ? '#F4B860' : '#59D9C7');
+      d.el.querySelector('text').setAttribute('opacity', norm < 0.22 ? '0' : '1');
     });
   });
 }
@@ -1022,6 +1028,7 @@ init();
     g.classList.add('vdot');
     g.setAttribute('transform', `translate(150,150)`);
     const inner = document.createElementNS('http://www.w3.org/2000/svg','g');
+    inner.classList.add('vdot-inner');
     inner.setAttribute('transform', `translate(${Math.cos(angle)*baseRadius},${Math.sin(angle)*baseRadius})`);
     const circle = document.createElementNS('http://www.w3.org/2000/svg','circle');
     circle.setAttribute('r','4');
