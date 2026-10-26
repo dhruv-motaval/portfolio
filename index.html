@@ -713,147 +713,71 @@
       <h2>What I've actually shipped</h2>
 
       <div class="project-grid" id="projectGrid">
-
-        <article class="card" data-tags="ci cd github actions devops pipeline testing pytest ml scoring incidents groq langchain fastapi">
-          <div class="card-head">
-            <h3>ExplainOps — AI Incident Triage</h3>
-            <span class="badge-non-genai">2-person hackathon</span>
-          </div>
-          <p class="tagline">Three event streams in, one explainable ranked triage list out.</p>
+        <article class="card" data-tags="full stack web frontend backend expense claims receipts FastAPI Next.js PostgreSQL SQLAlchemy AWS S3 Gemini vision PDF JSONB authorization duplicate detection">
+          <div class="card-head"><h3>Expense Claims System</h3></div>
+          <p class="tagline">A role-based expense workflow from receipt upload through approval and finance reporting.</p>
           <div class="stack-row">
-            <span class="stack-chip">FastAPI</span>
-            <span class="stack-chip">Scikit-learn</span>
-            <span class="stack-chip">LangChain</span>
-            <span class="stack-chip">Groq</span>
-            <span class="stack-chip">SQLite</span>
-            <span class="stack-chip">GitHub Actions</span>
+            <span class="stack-chip">Next.js</span><span class="stack-chip">Tailwind CSS</span><span class="stack-chip">FastAPI</span><span class="stack-chip">PostgreSQL</span><span class="stack-chip">SQLAlchemy</span><span class="stack-chip">AWS S3</span><span class="stack-chip">Gemini Vision</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">Engineered the ML scoring engine and GenAI explanation module: ticket, log, and chat events fuse into ML-ranked incidents with plain-language LLM explanations. 0.91 F1, 0.90 ROC-AUC at 1.2 ms inference. Per-driver score attribution + deterministic fallback keep triage auditable even when the LLM fails. CI pipeline on GitHub Actions (Python 3.11/3.12) retrains the model in-pipeline and runs end-to-end tests on every push.</p>
-          <div class="card-links">
-            <a href="https://github.com/dhruv-motaval/ExplainOps" target="_blank" rel="noopener">GitHub →</a>
-            <a href="https://github.com/dhruv-motaval/ExplainOps/blob/main/.github/workflows/ci.yml" target="_blank" rel="noopener">CI Pipeline →</a>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Built the receipt-to-payment workflow across the frontend, API, database, and storage layers. Backend rules cover role and team access, claim-state transitions, manager self-approval prevention, duplicate-receipt warnings, duplicate-payment blocking, monthly limits, and audit events. Receipt extraction creates an editable draft; payment is simulated and demo authentication is not production-grade.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/expense-claims-system" target="_blank" rel="noopener">GitHub →</a></div>
         </article>
 
-        
-
-        <article class="card" data-tags="multilingual call resolution langgraph state machine whisper spacy intent routing audit trail hindi spanish">
-          <div class="card-head">
-            <h3>Real-Time Multilingual Call Resolution</h3>
-          </div>
-          <p class="tagline">A LangGraph state machine that routes support calls in EN, ES, and HI.</p>
+        <article class="card" data-tags="ExplainOps AI incident triage backend FastAPI scikit-learn Logistic Regression Groq LangChain SQLite feedback model scoring ranking simulated tickets logs chat alerts CI GitHub Actions">
+          <div class="card-head"><h3>ExplainOps — AI Incident Triage</h3></div>
+          <p class="tagline">Three simulated event streams become an explainable, ranked incident queue.</p>
           <div class="stack-row">
-            <span class="stack-chip">LangGraph</span>
-            <span class="stack-chip">Whisper</span>
-            <span class="stack-chip">spaCy</span>
-            <span class="stack-chip">FastAPI</span>
-            <span class="stack-chip">Groq</span>
-            <span class="stack-chip">Streamlit</span>
+            <span class="stack-chip">FastAPI</span><span class="stack-chip">Scikit-learn</span><span class="stack-chip">LangChain</span><span class="stack-chip">Groq</span><span class="stack-chip">SQLite</span><span class="stack-chip">GitHub Actions</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">4-node StateGraph (transcribe → language detection → intent recognition → deterministic routing) processes call audio in English, Spanish, and Hindi with 100% local transcription and NLP — zero external API dependencies for routing decisions. Event-sourced audit trail with full state snapshots and event replay gives 100% decision traceability across every call.</p>
-          <div class="card-links">
-            <a href="https://github.com/dhruv-motaval/Real-Time-Multilingual-Call-Resolution-MyOnSite" target="_blank" rel="noopener">GitHub →</a>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Fuses simulated ticket, log, and chat inputs; ranks incidents with a Logistic Regression model and a deterministic weighted fallback. Groq/LangChain generates grounded explanations for the top five, while false-positive feedback adjusts per-service bias and model weighting. The end-to-end pipeline is tested and runs in GitHub Actions.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/ExplainOps" target="_blank" rel="noopener">GitHub →</a><a href="https://github.com/dhruv-motaval/ExplainOps/blob/main/.github/workflows/ci.yml" target="_blank" rel="noopener">CI Pipeline →</a></div>
         </article>
 
-        <article class="card" data-tags="retrieval rag latency threshold documents chroma groq embeddings langsmith tracing">
-          <div class="card-head">
-            <h3>RAG Document Q&amp;A System</h3>
-          </div>
-          <p class="tagline">Ask questions over a PDF and get answers with sources, not guesses.</p>
+        <article class="card" data-tags="ZENO Valorant stats guides full-stack web Node.js Express MongoDB Mongoose EJS Bootstrap Axios player profile match history leaderboard maps weapons agent guides">
+          <div class="card-head"><h3>ZENO — Valorant Stats &amp; Guides</h3></div>
+          <p class="tagline">A server-rendered gaming product with player lookup, stats pages, leaderboards, and guides.</p>
           <div class="stack-row">
-            <span class="stack-chip">FastAPI</span>
-            <span class="stack-chip">ChromaDB</span>
-            <span class="stack-chip">Sentence Transformers</span>
-            <span class="stack-chip">Groq (Llama-3.3-70B)</span>
-            <span class="stack-chip">LangChain</span>
-            <span class="stack-chip">LangSmith</span>
-            <span class="stack-chip">Streamlit</span>
+            <span class="stack-chip">Node.js</span><span class="stack-chip">Express.js</span><span class="stack-chip">MongoDB</span><span class="stack-chip">Mongoose</span><span class="stack-chip">EJS</span><span class="stack-chip">Bootstrap</span><span class="stack-chip">Axios</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">Built the full pipeline from PDF extraction through chunking, embeddings, ChromaDB retrieval, and Groq generation. A similarity-distance threshold returns "not found in document" instead of guessing. 1047ms average, 3087ms P95 across 50+ logged queries, traced end-to-end in LangSmith.</p>
-          <div class="card-links">
-            <a href="https://huggingface.co/spaces/MotavalD/Rag-Document-Qa" target="_blank" rel="noopener">Live Demo →</a>
-            <span class="demo-note">Space wakes on first request (~30s)</span>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Built Express routes and EJS views for player profiles and match history, leaderboards, maps, weapons, agent guides, and pro-player settings. MongoDB/Mongoose models back application data, while Axios integrates external Valorant data. Authentication code is basic configuration and middleware scaffolding, not a hardened auth system.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/zeno" target="_blank" rel="noopener">GitHub →</a></div>
         </article>
 
-        <article class="card" data-tags="langgraph agent tool calling tickets multilingual calls whisper spacy classification">
-          <div class="card-head">
-            <h3>Multilingual Call Classifier</h3>
-          </div>
-          <p class="tagline">Turns a support call, in any language, into a ticket, automatically.</p>
+        <article class="card" data-tags="RAG Document Q&A retrieval evaluation PDF Qdrant hybrid search BM25 Reciprocal Rank Fusion cross encoder reranking embeddings Sentence Transformers Groq LangChain FastAPI Streamlit LangSmith citations">
+          <div class="card-head"><h3>RAG Document Q&amp;A &amp; Retrieval Evaluation</h3></div>
+          <p class="tagline">Document-grounded answers with page citations and a reproducible retrieval evaluation.</p>
           <div class="stack-row">
-            <span class="stack-chip">LangGraph</span>
-            <span class="stack-chip">Whisper</span>
-            <span class="stack-chip">spaCy</span>
-            <span class="stack-chip">Groq</span>
-            <span class="stack-chip">SQLite</span>
+            <span class="stack-chip">FastAPI</span><span class="stack-chip">Qdrant</span><span class="stack-chip">BM25 + RRF</span><span class="stack-chip">Cross-encoder</span><span class="stack-chip">Sentence Transformers</span><span class="stack-chip">Groq</span><span class="stack-chip">LangSmith</span><span class="stack-chip">Streamlit</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">A LangGraph StateGraph: Whisper transcribes and detects language, spaCy pulls entities, and a tool-calling agent decides between opening an urgent ticket, scheduling a follow-up, or closing the ticket. Six tests fake Whisper, spaCy, and Groq at the boundary, so the routing logic runs offline in under a second.</p>
-          <div class="card-links">
-            <a href="https://github.com/dhruv-motaval/multilingual-call-classifier" target="_blank" rel="noopener">GitHub →</a>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Implemented dense and BM25 hybrid retrieval with Reciprocal Rank Fusion, cross-encoder reranking, page-level citations, and a grounded not-found response. On the repository's 29 answerable golden-set questions, the full pipeline reports Recall@4 1.000, MRR 1.000, and NDCG@4 1.000 at about 298 ms evaluation latency; this is a small test set, not a production-scale benchmark.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/Agentic-RAG" target="_blank" rel="noopener">GitHub →</a><a href="https://huggingface.co/spaces/MotavalD/Rag-Document-Qa" target="_blank" rel="noopener">Live Demo →</a></div>
         </article>
 
-        <article class="card" data-tags="classical machine learning xgboost prediction not genai roc auc">
-          <div class="card-head">
-            <h3>Stroke Risk Prediction API</h3>
-            <span class="badge-non-genai">non-GenAI</span>
-          </div>
-          <p class="tagline">Classical ML, included for balance: not everything here is an LLM.</p>
+        <article class="card" data-tags="multilingual call resolution voice Whisper speech-to-text spaCy language detection intent deterministic routing LangGraph FastAPI audit trail event replay Streamlit Hindi Spanish English">
+          <div class="card-head"><h3>Real-Time Multilingual Call Resolution</h3></div>
+          <p class="tagline">Transcribes support calls and routes them with explicit, deterministic rules.</p>
           <div class="stack-row">
-            <span class="stack-chip">XGBoost</span>
-            <span class="stack-chip">Scikit-learn</span>
-            <span class="stack-chip">FastAPI</span>
-            <span class="stack-chip">Docker</span>
+            <span class="stack-chip">FastAPI</span><span class="stack-chip">LangGraph</span><span class="stack-chip">Whisper</span><span class="stack-chip">spaCy</span><span class="stack-chip">Groq</span><span class="stack-chip">Streamlit</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">The ML inference microservice of a distributed health-monitoring system: smartwatch sensor → mobile client → REST API → automated user alerts. Trained and compared four models on 5,110 patient records; XGBoost came out on top at ROC-AUC ≈ 0.813. Shipped as a Dockerized FastAPI service, model to running container.</p>
-          <div class="card-links">
-            <a href="https://huggingface.co/spaces/MotavalD/Stroke_Prediction" target="_blank" rel="noopener">Live Demo →</a>
-            <span class="demo-note">Space wakes on first request (~30s)</span>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">A four-node LangGraph workflow uses local Whisper transcription, spaCy language detection, keyword-based intent recognition, and deterministic support routing. Groq generates audit explanations but does not choose the route. FastAPI exposes audio processing, audit-history, and event-replay endpoints, with a Streamlit dashboard for review.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/Real-Time-Multilingual-Call-Resolution-MyOnSite" target="_blank" rel="noopener">GitHub →</a></div>
         </article>
 
-        <article class="card" data-tags="chatbot persona streaming langchain context window">
-          <div class="card-head">
-            <h3>LangChain Multi-Persona Chatbot</h3>
-          </div>
-          <p class="tagline">One chatbot, several configurable personalities, switched through system prompts.</p>
+        <article class="card" data-tags="stroke risk prediction machine learning ML FastAPI Scikit-learn Pandas NumPy StandardScaler Docker healthcare patient data class imbalance">
+          <div class="card-head"><h3>Stroke Risk Prediction API <span class="badge-non-genai">classical ML</span></h3></div>
+          <p class="tagline">A trained classifier served through a documented prediction API.</p>
           <div class="stack-row">
-            <span class="stack-chip">LangChain</span>
-            <span class="stack-chip">Streaming</span>
-            <span class="stack-chip">Hugging Face Spaces</span>
+            <span class="stack-chip">Python</span><span class="stack-chip">Scikit-learn</span><span class="stack-chip">Pandas</span><span class="stack-chip">NumPy</span><span class="stack-chip">FastAPI</span><span class="stack-chip">Docker</span>
           </div>
-          <div class="score-wrap">
-            <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
-            <span class="score-label" data-label>keyword overlap: 0%</span>
-          </div>
-          <p class="metric stream-text">Streams tokens in real time and holds a sliding-window context so conversations stay coherent across persona switches. Deployed on Hugging Face Spaces.</p>
-          <div class="card-links">
-            <a href="https://github.com/dhruv-motaval/langchain-groq-chatbot" target="_blank" rel="noopener">GitHub →</a>
-          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Trained a stroke-risk classifier with preprocessing, feature engineering, and class-imbalance handling on a public patient dataset. FastAPI exposes a POST /predict endpoint and the repository includes a Dockerfile for local containerized execution. The model is a demonstration, not a clinical diagnosis or medical decision tool.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/Stroke-Prediction-API" target="_blank" rel="noopener">GitHub →</a><a href="https://huggingface.co/spaces/MotavalD/Stroke_Prediction" target="_blank" rel="noopener">Live Demo →</a></div>
         </article>
-
       </div>
     </div>
   </section>
@@ -862,27 +786,27 @@
   <section id="more-projects" style="padding-top:0;">
     <div class="wrap">
       <p class="eyebrow">Also built</p>
-      <h2 style="margin-bottom:20px;">Smaller builds worth a mention</h2>
+      <h2 style="margin-bottom:20px;">Additional engineering projects</h2>
       <div class="mini-grid">
         <div class="mini-card">
+          <h4>NomadicOS — Local-First AI Orchestration</h4>
+          <p class="stream-text">Python orchestration runtime with typed action validation, owner authorization, model routing, bounded recovery, and evidence-backed verification. Version 0.2.0 is a controlled-execution foundation; desktop control and semantic memory are still in development.</p>
+          <a href="https://github.com/dhruv-motaval/NomadicOS" target="_blank" rel="noopener">GitHub →</a>
+        </div>
+        <div class="mini-card">
           <h4>Self-Evaluating Lesson Generator</h4>
-          <p class="stream-text">LLM-as-judge agent: generates content, grades itself against a 6-check rubric with structured Pydantic outputs, revises on failure, and accumulates "known pitfall" rules in SQLite across runs. 18 offline tests, sub-second, no API key needed.</p>
+          <p class="stream-text">LangGraph workflow generates a lesson, checks it against a strict six-part rubric, revises failed checks within a retry limit, and stores recurring pitfalls in SQLite memory. The run log records failures honestly instead of silently marking every output successful.</p>
           <a href="https://github.com/dhruv-motaval/self-evaluating-lesson-generator" target="_blank" rel="noopener">GitHub →</a>
         </div>
         <div class="mini-card">
-          <h4>Northstar One AI Sales Agent</h4>
-          <p class="stream-text">FastAPI tool-calling chatbot for lead qualification, objection handling, and site-visit booking — session memory, multi-provider LLM routing over OpenAI-compatible APIs.</p>
+          <h4>Northstar One — AI Sales Agent</h4>
+          <p class="stream-text">FastAPI chatbot for lead qualification and objection handling with JSON tool schemas and provider fallback. Site-visit booking is simulated, session memory is in-memory, and the demo does not include authentication.</p>
           <a href="https://github.com/dhruv-motaval/northstar-one-agent" target="_blank" rel="noopener">GitHub →</a>
         </div>
         <div class="mini-card">
           <h4>AI Meeting Minutes Generator (Auto-MOM)</h4>
-          <p class="stream-text">Turns raw meeting audio into a finished PDF with no manual steps: Whisper transcribes, spaCy pulls attendees via NER, ReportLab formats the notes. Live on Hugging Face Spaces.</p>
-          <a href="https://huggingface.co/spaces/MotavalD/AUTO-mom" target="_blank" rel="noopener">Live Demo →</a>
-        </div>
-        <div class="mini-card">
-          <h4>AI-Document-RAG-System (Local)</h4>
-          <p class="stream-text">Fully local RAG with Ollama inference — document Q&amp;A that runs entirely offline, no cloud API calls.</p>
-          <a href="https://github.com/dhruv-motaval/AI-Document-RAG-System" target="_blank" rel="noopener">GitHub →</a>
+          <p class="stream-text">Converts meeting audio to a formatted PDF using Whisper transcription, spaCy entity extraction, and ReportLab. A Gradio/Hugging Face demo is available.</p>
+          <a href="https://github.com/dhruv-motaval/Auto-MOM" target="_blank" rel="noopener">GitHub →</a><a href="https://huggingface.co/spaces/MotavalD/AUTO-mom" target="_blank" rel="noopener">Live Demo →</a>
         </div>
       </div>
     </div>
