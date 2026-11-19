@@ -535,6 +535,18 @@
             <span class="skill-chip">Python</span>
             <span class="skill-chip">SQL</span>
             <span class="skill-chip">JavaScript</span>
+            <span class="skill-chip">TypeScript</span>
+          </div>
+        </div>
+        <div class="skill-row">
+          <div class="skill-row-label"><span class="bar"></span><span>Web &amp; Frontend</span></div>
+          <div class="skill-row-chips">
+            <span class="skill-chip">React</span>
+            <span class="skill-chip">Next.js</span>
+            <span class="skill-chip">Vite</span>
+            <span class="skill-chip">Tailwind CSS</span>
+            <span class="skill-chip">Tiptap</span>
+            <span class="skill-chip">Recharts</span>
           </div>
         </div>
         <div class="skill-row">
@@ -584,6 +596,9 @@
             <span class="skill-chip">SQLAlchemy</span>
             <span class="skill-chip">SQLite</span>
             <span class="skill-chip">PostgreSQL</span>
+            <span class="skill-chip">Node.js</span>
+            <span class="skill-chip">Express.js</span>
+            <span class="skill-chip">MongoDB</span>
           </div>
         </div>
         <div class="skill-row">
@@ -596,6 +611,8 @@
             <span class="skill-chip">Hugging Face Spaces</span>
             <span class="skill-chip">Railway</span>
             <span class="skill-chip">Netlify</span>
+            <span class="skill-chip">Vercel</span>
+            <span class="skill-chip">AWS S3</span>
             <span class="skill-chip">Git</span>
             <span class="skill-chip">Linux (Ubuntu, Arch)</span>
           </div>
@@ -680,7 +697,7 @@
       <p class="skills-intro stream-text">A local-first AI runtime for connecting LLM reasoning, memory, tools, and controlled OS actions through a structured execution layer.</p>
     </div>
     <div class="wrap nomad-single">
-<article class="card nomad-wide" data-tags="nomadicos local first ai runtime python langgraph ollama llama.cpp gguf pydantic action ir authorization windows execution memory rag">
+<article class="card nomad-wide" data-tags="nomadicos local first ai runtime python langgraph ollama llama.cpp gguf pydantic action ir authorization windows execution memory rag postgresql fastapi react ui automation desktop agent planner multi-agent goal verification">
           <div class="card-head">
             <h3>NomadicOS, Local-First AI Runtime</h3>
             <span class="badge-non-genai">actively building</span>
@@ -693,13 +710,17 @@
             <span class="stack-chip">llama.cpp</span>
             <span class="stack-chip">GGUF</span>
             <span class="stack-chip">Pydantic</span>
+            <span class="stack-chip">PostgreSQL</span>
+            <span class="stack-chip">FastAPI</span>
+            <span class="stack-chip">React</span>
           </div>
           <div class="score-wrap">
             <div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div>
             <span class="score-label" data-label>keyword overlap: 0%</span>
           </div>
-          <p class="metric stream-text">Separates LLM reasoning from structured Action IR validation, authorization, OS execution, and evidence-based goal verification. Implements controlled Windows execution with owner authorization, revocation epochs, single-use authorization, filesystem confinement, structured terminal execution, and process-tree cleanup. Uses structured object-type memory and RAG for persistent context and knowledge retrieval.</p>
-          <p class="metric stream-text">Validation: 203-test regression suite, 7 live local-model tests, Ruff clean, formatting clean, and mypy clean.</p>
+          <p class="metric stream-text">Separates LLM reasoning from structured Action IR validation, authorization, OS execution, and evidence-based goal verification. Implements controlled Windows execution with owner authorization, revocation epochs, single-use authorization, filesystem confinement, structured terminal execution, and process-tree cleanup. The NomadicBrain planner splits goals into research, coding, and execution tasks, with PostgreSQL-backed durable restart and resume, bounded recovery, and goal verification across 13 predicate types. Recent work adds Windows UI Automation and process tools to the desktop brick, parallel missions with an exclusive desktop lease, opt-in free-only cloud routing, and a FastAPI layer with a React dashboard in progress.</p>
+          <p class="metric stream-text">Latest milestone: first verified research → code → run → save mission end to end on a local 8B model, confirmed by the goal verifier (a single run; reliability not yet measured). Parallel missions and cloud routing are tested with fakes only, and vision verification is not wired up yet.</p>
+          <p class="metric stream-text">Validation: 1,500+ test functions across 158 test files; the deterministic suite passes and Ruff is clean.</p>
           <div class="card-links">
             <a href="https://github.com/dhruv-motaval/nomadicos" target="_blank" rel="noopener">GitHub →</a>
           </div>
@@ -720,8 +741,30 @@
             <span class="stack-chip">Next.js</span><span class="stack-chip">Tailwind CSS</span><span class="stack-chip">FastAPI</span><span class="stack-chip">PostgreSQL</span><span class="stack-chip">SQLAlchemy</span><span class="stack-chip">AWS S3</span><span class="stack-chip">Gemini Vision</span>
           </div>
           <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
-          <p class="metric stream-text">Built the receipt-to-payment workflow across the frontend, API, database, and storage layers. Backend rules cover role and team access, claim-state transitions, manager self-approval prevention, duplicate-receipt warnings, duplicate-payment blocking, monthly limits, and audit events. Receipt extraction creates an editable draft; payment is simulated and demo authentication is not production-grade.</p>
-          <div class="card-links"><a href="https://github.com/dhruv-motaval/expense-claims-system" target="_blank" rel="noopener">GitHub →</a></div>
+          <p class="metric stream-text">Built the receipt-to-payment workflow across the frontend, API, database, and storage layers. Backend rules cover role and team access, claim-state transitions, manager self-approval prevention, duplicate-receipt warnings, duplicate-payment blocking, monthly limits, and audit events. Gemini parses receipt images and PDFs into an editable draft; receipts live in hot local/MinIO storage during review and move to S3 Standard-IA after payment. 72 pytest tests cover gate rules, payment tiers, and send-back flows. Payment is simulated and demo authentication is not production-grade.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/expense-claims-system" target="_blank" rel="noopener">GitHub →</a><a href="https://expense-claims-system.vercel.app" target="_blank" rel="noopener">Live Demo →</a></div>
+        </article>
+
+        <article class="card" data-tags="ShareDoc collaborative document editor full stack web frontend React Vite Tiptap rich text Node.js Express SQLite libSQL Turso Vercel sharing permissions viewer editor import docx markdown autosave">
+          <div class="card-head"><h3>ShareDoc — Collaborative Document Editor</h3></div>
+          <p class="tagline">Rich-text documents you can create, import, and share with viewer or editor access.</p>
+          <div class="stack-row">
+            <span class="stack-chip">React</span><span class="stack-chip">Vite</span><span class="stack-chip">Tiptap</span><span class="stack-chip">Node.js</span><span class="stack-chip">Express.js</span><span class="stack-chip">SQLite / Turso</span><span class="stack-chip">Vercel</span>
+          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Tiptap editor with headings, lists, and formatting, plus autosave and HTML export. Imports .txt, .md, and .docx files as new documents. Owners share by email as viewer or editor and can change or revoke access; the dashboard splits My documents from Shared with me. The same SQL runs on a local SQLite file in development and on Turso in production on Vercel. Six API tests use in-memory SQLite. Sign-in is a mocked user picker, and there is no real-time co-editing (last save wins, with a version-conflict check).</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/sharedoc" target="_blank" rel="noopener">GitHub →</a><a href="https://sharedoc-six.vercel.app" target="_blank" rel="noopener">Live Demo →</a></div>
+        </article>
+
+        <article class="card" data-tags="Wind Signal UK wind forecast accuracy dashboard energy electricity Elexon FUELHH WINDFOR React TypeScript Vite Recharts FastAPI HTTPX Pydantic MAE RMSE bias MAPE time series data analysis CSV export Docker Vercel">
+          <div class="card-head"><h3>Wind Signal — UK Wind Forecast Workbench</h3></div>
+          <p class="tagline">Measures how accurate day-ahead GB wind forecasts were at the moment purchasing decisions were made.</p>
+          <div class="stack-row">
+            <span class="stack-chip">React</span><span class="stack-chip">TypeScript</span><span class="stack-chip">Recharts</span><span class="stack-chip">FastAPI</span><span class="stack-chip">HTTPX</span><span class="stack-chip">Pydantic</span><span class="stack-chip">Docker</span>
+          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Pulls Elexon's public FUELHH actual-generation and WINDFOR forecast datasets for January 2026. For each period it picks the latest forecast published before a configurable day-ahead cutoff (default 09:00 Europe/London), then reports MAE, RMSE, bias, coverage, and a guarded MAPE. Users can inspect individual periods and export CSVs. Failed API calls are never filled with made-up values; Pytest unit tests cover forecast-vintage filtering and the metric math.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/khxm293j" target="_blank" rel="noopener">GitHub →</a><a href="https://khxm293j-mdtk.vercel.app/" target="_blank" rel="noopener">Live Demo →</a></div>
         </article>
 
         <article class="card" data-tags="ExplainOps AI incident triage backend FastAPI scikit-learn Logistic Regression Groq LangChain SQLite feedback model scoring ranking simulated tickets logs chat alerts CI GitHub Actions">
@@ -733,6 +776,17 @@
           <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
           <p class="metric stream-text">Fuses simulated ticket, log, and chat inputs; ranks incidents with a Logistic Regression model and a deterministic weighted fallback. Groq/LangChain generates grounded explanations for the top five, while false-positive feedback adjusts per-service bias and model weighting. The end-to-end pipeline is tested and runs in GitHub Actions.</p>
           <div class="card-links"><a href="https://github.com/dhruv-motaval/ExplainOps" target="_blank" rel="noopener">GitHub →</a><a href="https://github.com/dhruv-motaval/ExplainOps/blob/main/.github/workflows/ci.yml" target="_blank" rel="noopener">CI Pipeline →</a></div>
+        </article>
+
+        <article class="card" data-tags="FotoOwl Reel image to video multi-agent pipeline LangGraph Remotion photos creative brief storyboard vision Groq Llama 4 Scout RAG code generation self-correcting compile retry loop LLM-as-judge Sentence Transformers pytest">
+          <div class="card-head"><h3>FotoOwl Reel — Photos-to-Video Multi-Agent Pipeline</h3></div>
+          <p class="tagline">Event photos plus a free-text brief become a rendered Remotion video.</p>
+          <div class="stack-row">
+            <span class="stack-chip">LangGraph</span><span class="stack-chip">Groq</span><span class="stack-chip">Llama 4 Scout (vision)</span><span class="stack-chip">Remotion</span><span class="stack-chip">RAG</span><span class="stack-chip">Sentence Transformers</span><span class="stack-chip">Pytest</span>
+          </div>
+          <div class="score-wrap"><div class="score-bar-track"><div class="score-bar-fill" data-fill></div></div><span class="score-label" data-label>keyword overlap: 0%</span></div>
+          <p class="metric stream-text">Five agents share one typed state. The brief is parsed once into a structured VideoIntent; then the agents score each photo with a vision model, write a storyboard grounded in a style-guide RAG, and generate Remotion code grounded in an API-reference RAG. A compile-and-fix loop feeds structured errors and error-specific API snippets back to the generator, and exits with a failure report once the retry limit is reached. Offline tests check that different briefs produce different storyboards from the same photos. The loop checks compilation, not a full render, so some runtime-only errors can still slip through.</p>
+          <div class="card-links"><a href="https://github.com/dhruv-motaval/fotoowl-reel" target="_blank" rel="noopener">GitHub →</a></div>
         </article>
 
         <article class="card" data-tags="ZENO Valorant stats guides full-stack web Node.js Express MongoDB Mongoose EJS Bootstrap Axios player profile match history leaderboard maps weapons agent guides">
@@ -790,7 +844,7 @@
       <div class="mini-grid">
         <div class="mini-card">
           <h4>NomadicOS — Local-First AI Orchestration</h4>
-          <p class="stream-text">Python orchestration runtime with typed action validation, owner authorization, model routing, bounded recovery, and evidence-backed verification. Version 0.2.0 is a controlled-execution foundation; desktop control and semantic memory are still in development.</p>
+          <p class="stream-text">Python orchestration runtime with typed action validation, owner authorization, model routing, bounded recovery, and evidence-backed verification. The NomadicBrain planner has completed a verified research → code → run → save mission on a local 8B model. Windows UI Automation, parallel missions, and a React dashboard are in progress; vision is not wired up yet.</p>
           <a href="https://github.com/dhruv-motaval/NomadicOS" target="_blank" rel="noopener">GitHub →</a>
         </div>
         <div class="mini-card">
@@ -807,6 +861,21 @@
           <h4>AI Meeting Minutes Generator (Auto-MOM)</h4>
           <p class="stream-text">Converts meeting audio to a formatted PDF using Whisper transcription, spaCy entity extraction, and ReportLab. A Gradio/Hugging Face demo is available.</p>
           <a href="https://github.com/dhruv-motaval/Auto-MOM" target="_blank" rel="noopener">GitHub →</a><a href="https://huggingface.co/spaces/MotavalD/AUTO-mom" target="_blank" rel="noopener">Live Demo →</a>
+        </div>
+        <div class="mini-card">
+          <h4>LangGraph Multi-Agent Call Classifier</h4>
+          <p class="stream-text">Rebuilds a linear notebook as a LangGraph StateGraph. Calls go through Whisper transcription, translation (skipped for English calls), spaCy entity extraction, and structured-output classification. A tool-calling agent then chooses whether to open an urgent ticket, schedule a follow-up, or close the call, and logs the action to SQLite. Six offline tests mock Whisper, spaCy, and the LLM.</p>
+          <a href="https://github.com/dhruv-motaval/multilingual-call-classifier" target="_blank" rel="noopener">GitHub →</a>
+        </div>
+        <div class="mini-card">
+          <h4>LangGraph Tool-Calling Agent</h4>
+          <p class="stream-text">A minimal agent built directly from LangGraph primitives (StateGraph, ToolNode, tools_condition) rather than prebuilt wrappers. It handles multi-step tool calls, keeps per-thread memory with MemorySaver, and streams each step of the loop.</p>
+          <a href="https://github.com/dhruv-motaval/LangGraph-Tool-Calling-Agent" target="_blank" rel="noopener">GitHub →</a>
+        </div>
+        <div class="mini-card">
+          <h4>LangChain Groq Chatbot</h4>
+          <p class="stream-text">Streaming Streamlit chatbot built on an LCEL pipeline (prompt | llm | parser). It offers switchable personas, custom system prompts, temperature and model controls, and a 10-message sliding-window memory.</p>
+          <a href="https://github.com/dhruv-motaval/langchain-groq-chatbot" target="_blank" rel="noopener">GitHub →</a><a href="https://huggingface.co/spaces/MotavalD/LangChain-Groq-Chatbot" target="_blank" rel="noopener">Live Demo →</a>
         </div>
       </div>
     </div>
