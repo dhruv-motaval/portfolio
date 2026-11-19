@@ -60,7 +60,7 @@ class LiveHandler(http.server.SimpleHTTPRequestHandler):
             self.end_headers()
             self.wfile.write(body)
             return
-        if path in ("/", "/index.html"):
+        if path in ("/", "/index.html", "/ai", "/sde"):  # /ai and /sde mirror the vercel.json rewrites
             try:
                 html = open(os.path.join(ROOT, "index.html"), encoding="utf-8").read()
             except OSError:

@@ -2,6 +2,16 @@
 
 This repository contains the source for my portfolio website. The project cards in `index.html` are ordered to show my strongest end-to-end product, backend, and AI work first.
 
+The site has three views of the same content:
+
+- `/`: All: AI + full-stack headline, everything shown, NomadicOS as "Currently Building".
+- `/ai`: AI Engineer focus: GenAI headline, AI projects and skills first, NomadicOS as "Currently Building".
+- `/sde`: Full-stack SDE focus: full-stack headline, web/backend projects and skills first, Expense Claims System as the featured project.
+
+View-specific copy is marked with `data-only="…"` (a space-separated list of `all`, `ai`, `sde`) in `index.html`; project and skill order per view lives in the `ORDER` object just above the search script. `vercel.json` rewrites `/ai` and `/sde` to `index.html`.
+
+The Skills section has a JD matcher: paste a job description or upload it as .txt, PDF, .docx, or an image (OCR). It runs entirely in the browser, lists which of the JD's skills are on the profile, and filters and ranks skills and projects to the role. Recognised skills live in the `TERMS` list in `index.html`.
+
 ## Featured projects
 
 1. **[Expense Claims System](https://github.com/dhruv-motaval/expense-claims-system)** — Next.js + FastAPI + PostgreSQL expense workflow, server-side role/team permissions, duplicate detection, duplicate-payment prevention, spend limits, audit trail, Gemini receipt extraction, hot local/MinIO to cold S3 receipt storage, and 72 tests. Payment is simulated; authentication is demo-only. [Live demo](https://expense-claims-system.vercel.app).
