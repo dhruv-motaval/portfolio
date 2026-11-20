@@ -9,9 +9,14 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="color-scheme" content="dark light" />
-<script>(function(){var d=document.documentElement,m=location.pathname.match(/^\/(ai|sde)\/?$/),q=location.search.match(/[?&]view=(ai|sde|all)\b/),v=(q&&q[1])||(m&&m[1])||"all";d.dataset.view=v;
-var T={ai:["Dhruv Motaval, AI Developer / GenAI, LLM & Agentic Applications","Dhruv Motaval. AI developer building RAG, LLM agents, and voice pipelines. Based in Vadodara, open to roles across India."],sde:["Dhruv Motaval, Full-stack Software Engineer / React, Node.js, FastAPI & PostgreSQL","Dhruv Motaval. Full-stack software engineer building React/Next.js frontends, FastAPI/Node.js APIs and PostgreSQL apps. Based in Vadodara, open to roles across India."]};
-if(T[v]){document.title=T[v][0];var e=document.querySelector('meta[name="description"]');if(e)e.content=T[v][1];}})();
+<script>(function(){
+var d=document.documentElement, e=document.querySelector('meta[name="description"]');
+window.__VIEW_META={all:[document.title, e?e.content:''],
+  ai:["Dhruv Motaval, AI Developer / GenAI, LLM & Agentic Applications","Dhruv Motaval. AI developer building RAG, LLM agents, and voice pipelines. Based in Vadodara, open to roles across India."],
+  sde:["Dhruv Motaval, Full-stack Software Engineer / React, Node.js, FastAPI & PostgreSQL","Dhruv Motaval. Full-stack software engineer building React/Next.js frontends, FastAPI/Node.js APIs and PostgreSQL apps. Based in Vadodara, open to roles across India."]};
+window.__viewFromUrl=function(){var m=location.pathname.match(/^\/(ai|sde)\/?$/),q=location.search.match(/[?&]view=(ai|sde|all)\b/);return (q&&q[1])||(m&&m[1])||"all";};
+var v=window.__viewFromUrl(), t=window.__VIEW_META[v]; d.dataset.view=v; document.title=t[0]; if(e)e.content=t[1];
+})();
 try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.documentElement.dataset.theme=t;}catch(e){}</script>
 <style>
   /* Design system: Swiss minimal + dark-first, navy + amber/teal (original palette).
@@ -520,6 +525,17 @@ try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.docu
   }
   .jd-why::before{content:'✓ ';}
   @media (max-width:640px){ .jd-panel{padding:18px;} .jd-k{min-width:0; width:100%;} }
+
+  /* ---------- VIEW SWITCH MOTION ---------- */
+  header.site{view-transition-name:site-header;}
+  ::view-transition-group(*){animation-duration:.42s; animation-timing-function:cubic-bezier(.2,.8,.2,1);}
+  ::view-transition-old(root), ::view-transition-new(root){animation-duration:.28s;}
+  main{transition:opacity .14s ease;}
+  main.view-fade{opacity:.15;}
+  .view-switched .stream-word{opacity:1; filter:none; transition:none;}
+  .view-switched .stream-cursor{display:none;}
+  .view-switch a{transition:color .2s ease, background-color .25s ease;}
+  @media (prefers-reduced-motion: reduce){ ::view-transition-group(*), ::view-transition-old(*), ::view-transition-new(*){animation:none !important;} }
 
   footer{
     border-top:1px solid var(--border); padding:28px 0;
@@ -1078,7 +1094,7 @@ try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.docu
 
 <script>
 (function(){
-  var v = document.documentElement.dataset.view;
+  var root = document.documentElement;
   var ORDER = {
     projects: {
       ai:  ['RAG Document', 'ExplainOps', 'FotoOwl', 'Real-Time', 'Expense', 'Stroke', 'ShareDoc', 'Wind Signal', 'ZENO'],
@@ -1104,17 +1120,71 @@ try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.docu
          .sort(function(a,b){ return a.r - b.r || a.i - b.i; })
          .forEach(function(x){ parent.appendChild(x.el); });
   }
-  if(!ORDER.projects[v]) v = 'all';
-  // SDE: Expense Claims takes the featured slot instead of NomadicOS
-  if(v === 'sde'){
-    var ex = document.getElementById('expenseCard'), slot = document.querySelector('#building .nomad-single');
-    if(ex && slot){ ex.classList.add('nomad-wide', 'showcased'); slot.appendChild(ex); }
+
+  function applyView(v){
+    if(!ORDER.projects[v]) v = 'all';
+    root.dataset.view = v;
+    var grid = document.getElementById('projectGrid'), slot = document.querySelector('#building .nomad-single'),
+        ex = document.getElementById('expenseCard');
+    // SDE: Expense Claims takes the featured slot instead of NomadicOS; other views keep it in the grid
+    if(ex && slot){
+      if(v === 'sde'){ ex.classList.add('nomad-wide', 'showcased'); slot.appendChild(ex); }
+      else if(ex.classList.contains('showcased')){ ex.classList.remove('nomad-wide', 'showcased'); grid.appendChild(ex); }
+    }
+    reorder(grid, ':scope > .card', 'h3', ORDER.projects[v]);
+    reorder(document.querySelector('.skills-panel'), ':scope > .skill-row', '.skill-row-label span:last-child', ORDER.skills[v]);
+    document.querySelectorAll('.view-switch a').forEach(function(a){
+      if(a.dataset.v === v) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
+    });
+    var meta = (window.__VIEW_META || {})[v], desc = document.querySelector('meta[name="description"]');
+    if(meta){ document.title = meta[0]; if(desc) desc.content = meta[1]; }
   }
-  reorder(document.getElementById('projectGrid'), ':scope > .card', 'h3', ORDER.projects[v]);
-  reorder(document.querySelector('.skills-panel'), ':scope > .skill-row', '.skill-row-label span:last-child', ORDER.skills[v]);
+  applyView(root.dataset.view);
+
+  // ---- in-place switching: no reload, animated reflow, real URLs + back/forward
+  var reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var named = false;
+  function nameMovers(){
+    // give each moving block a stable name so the browser animates it to its new spot
+    if(named) return; named = true;
+    var n = 0;
+    document.querySelectorAll('#projectGrid > .card, #building .card, .skill-row').forEach(function(el){
+      el.style.viewTransitionName = 'vt-' + (n++);
+    });
+  }
+  // the latest requested view wins, even if clicks/back presses outpace the animation
+  var target = root.dataset.view;
+  function go(v){
+    if(v === target) return;
+    target = v;
+    var jd = window.__jd, jdOn = jd && jd.isActive();
+    var swap = function(){
+      if(jdOn && jd.isActive()) jd.clear(true);
+      root.classList.add('view-switched');   // newly shown copy appears at once instead of re-typing
+      if(root.dataset.view !== target) applyView(target);
+    };
+    if(document.startViewTransition && !reduce.matches){
+      nameMovers();
+      var t = document.startViewTransition(swap);
+      t.ready.catch(function(){});   // a newer click skips this animation; the swap itself still runs
+      if(jdOn) t.updateCallbackDone.then(function(){ jd.run(); }, function(){});
+    } else if(!reduce.matches){
+      var main = document.querySelector('main');
+      main.classList.add('view-fade');
+      setTimeout(function(){ swap(); main.classList.remove('view-fade'); if(jdOn) jd.run(); }, 140);
+    } else { swap(); if(jdOn) jd.run(); }
+  }
   document.querySelectorAll('.view-switch a').forEach(function(a){
-    if(a.dataset.v === v) a.setAttribute('aria-current', 'page');
+    a.addEventListener('click', function(e){
+      if(e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return;  // let new-tab clicks through
+      e.preventDefault();
+      var v = a.dataset.v;
+      if(v === target) return;
+      history.pushState({view: v}, '', a.getAttribute('href') + location.hash);
+      go(v);
+    });
   });
+  window.addEventListener('popstate', function(){ go(window.__viewFromUrl()); });
 })();
 </script>
 
@@ -1371,6 +1441,7 @@ try{var t=localStorage.getItem("theme");if(t==="light"||t==="dark")document.docu
   }
 
   btn.addEventListener('click', run);
+  window.__jd = { isActive: function(){ return document.body.classList.contains('jd-active'); }, clear: clear, run: run };
   clearBtn.addEventListener('click', function(){ clear(); ta.value = ''; ta.focus(); });
   fileIn.addEventListener('change', function(){ handleFile(fileIn.files[0]); });
   ['dragenter','dragover'].forEach(function(ev){ panel.addEventListener(ev, function(e){ e.preventDefault(); panel.classList.add('jd-drag'); }); });
